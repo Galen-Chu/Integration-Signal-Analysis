@@ -8,6 +8,10 @@ from pathlib import Path
 UCI_URL = ("https://archive.ics.uci.edu/static/public/240/"
            "human+activity+recognition+using+smartphones.zip")
 
+# PAMAP2：心率＋三 IMU 同步量測（9 人×18 活動×100Hz）——整合分析主力
+PAMAP2_URL = ("https://archive.ics.uci.edu/static/public/231/"
+              "pamap2+physical+activity+monitoring.zip")
+
 # Kaggle: FitBit Fitness Tracker Data（33 位 Fitbit 使用者 03-04.2016 分鐘級資料）
 FITBIT_DATASET = "mobius/fitbit-fitness-tracker-data"
 
@@ -76,3 +80,26 @@ def download_all(raw_dir: Path, include_fitbit: bool = True):
             print(f"⚠ Fitbit 下載失敗（{e}）——UCI 管線不受影響；"
                   "手動下載說明見 README。")
     return True
+
+
+def download_pamap2(raw_dir: Path) -> Path:
+    """下載 PAMAP2（HR＋IMU 同步量測）；回傳 subject*.dat 所在目錄."""
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    hits = list(raw_dir.glob("**/subject101.dat"))
+    if hits:
+        print(f"PAMAP2 already present at {hits[0].parent}")
+        return hits[0].parent
+
+    inner_zip = raw_dir / "PAMAP2_Dataset.zip"
+    if not inner_zip.is_file():
+        print(f"Downloading PAMAP2 from {PAMAP2_URL} …")
+        data = urllib.request.urlopen(PAMAP2_URL, timeout=900).read()
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            zf.extractall(raw_dir)          # UCI 外層：內含 PAMAP2_Dataset.zip＋readme
+    # 解內層 zip（subject*.dat 在這層）
+    with zipfile.ZipFile(inner_zip) as inner:
+        inner.extractall(raw_dir)
+    protocol = raw_dir / "PAMAP2_Dataset" / "Protocol"
+    assert protocol.is_dir(), "unexpected PAMAP2 archive layout"
+    print(f"PAMAP2 extracted → {protocol}")
+    return protocol

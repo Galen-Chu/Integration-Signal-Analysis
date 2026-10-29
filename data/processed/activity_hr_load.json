@@ -1,0 +1,127 @@
+{
+  "subjects": 9,
+  "total_person_seconds": 19515,
+  "hrmax_assumed": 190,
+  "activities": [
+    {
+      "activity": "lying",
+      "act_id": 1,
+      "pct_hrmax_mean": 39.77915127532575,
+      "pct_hrmax_std": 5.556642841185894,
+      "hr_mean": 75.58038742311892,
+      "acc_mag_mean": 9.728353539808626,
+      "n_subjects": 8,
+      "n_seconds": 1933
+    },
+    {
+      "activity": "sitting",
+      "act_id": 2,
+      "pct_hrmax_mean": 42.124840438910894,
+      "pct_hrmax_std": 4.22103414625211,
+      "hr_mean": 80.03719683393071,
+      "acc_mag_mean": 9.7604343479294,
+      "n_subjects": 8,
+      "n_seconds": 1860
+    },
+    {
+      "activity": "standing",
+      "act_id": 3,
+      "pct_hrmax_mean": 46.61719464538122,
+      "pct_hrmax_std": 5.27015018747197,
+      "hr_mean": 88.57266982622433,
+      "acc_mag_mean": 9.783632807518035,
+      "n_subjects": 8,
+      "n_seconds": 1899
+    },
+    {
+      "activity": "ironing",
+      "act_id": 17,
+      "pct_hrmax_mean": 47.404133939564964,
+      "pct_hrmax_std": 4.696713946085807,
+      "hr_mean": 90.06785448517346,
+      "acc_mag_mean": 10.016596183432775,
+      "n_subjects": 8,
+      "n_seconds": 2389
+    },
+    {
+      "activity": "vacuum_cleaning",
+      "act_id": 16,
+      "pct_hrmax_mean": 54.8307920805231,
+      "pct_hrmax_std": 7.114945876539142,
+      "hr_mean": 104.17850495299388,
+      "acc_mag_mean": 10.759402478139755,
+      "n_subjects": 8,
+      "n_seconds": 1761
+    },
+    {
+      "activity": "walking",
+      "act_id": 4,
+      "pct_hrmax_mean": 59.36896259746588,
+      "pct_hrmax_std": 5.028594266226019,
+      "hr_mean": 112.80102893518519,
+      "acc_mag_mean": 11.240047917208607,
+      "n_subjects": 8,
+      "n_seconds": 2400
+    },
+    {
+      "activity": "nordic_walking",
+      "act_id": 7,
+      "pct_hrmax_mean": 65.15672054673476,
+      "pct_hrmax_std": 5.787319265189282,
+      "hr_mean": 123.79776903879602,
+      "acc_mag_mean": 10.974707815959462,
+      "n_subjects": 7,
+      "n_seconds": 1889
+    },
+    {
+      "activity": "cycling",
+      "act_id": 6,
+      "pct_hrmax_mean": 65.7110419474781,
+      "pct_hrmax_std": 4.565369512041874,
+      "hr_mean": 124.85097970020837,
+      "acc_mag_mean": 10.673967238163376,
+      "n_subjects": 7,
+      "n_seconds": 1653
+    },
+    {
+      "activity": "descending_stairs",
+      "act_id": 13,
+      "pct_hrmax_mean": 67.87769720509804,
+      "pct_hrmax_std": 12.052731956557277,
+      "hr_mean": 128.96762468968632,
+      "acc_mag_mean": 10.337985719877107,
+      "n_subjects": 8,
+      "n_seconds": 1055
+    },
+    {
+      "activity": "ascending_stairs",
+      "act_id": 12,
+      "pct_hrmax_mean": 68.1932451077188,
+      "pct_hrmax_std": 11.051239876177258,
+      "hr_mean": 129.5671657046657,
+      "acc_mag_mean": 10.658216038862955,
+      "n_subjects": 8,
+      "n_seconds": 1188
+    },
+    {
+      "activity": "running",
+      "act_id": 5,
+      "pct_hrmax_mean": 82.34616516856686,
+      "pct_hrmax_std": 12.057182792220356,
+      "hr_mean": 156.45771382027704,
+      "acc_mag_mean": 20.12073359559631,
+      "n_subjects": 7,
+      "n_seconds": 989
+    },
+    {
+      "activity": "rope_jumping",
+      "act_id": 24,
+      "pct_hrmax_mean": 85.23073046678151,
+      "pct_hrmax_std": 11.437766978518939,
+      "hr_mean": 161.93838788688487,
+      "acc_mag_mean": 13.739447580215364,
+      "n_subjects": 6,
+      "n_seconds": 499
+    }
+  ]
+}
