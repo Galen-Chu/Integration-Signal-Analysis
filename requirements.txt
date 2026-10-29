@@ -1,0 +1,7 @@
+numpy>=1.26
+pandas>=2.0
+scipy>=1.11
+scikit-learn>=1.4
+matplotlib>=3.8
+pytest>=8.0
+kagglehub  # Fitbit 資料集下載（公開資料集免帳號）
