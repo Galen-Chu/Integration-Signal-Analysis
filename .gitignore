@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Data (raw datasets are downloaded, not committed)
+data/raw/
+data/processed/*.csv
+!data/processed/.gitkeep
+
+# Artifacts
+*.pkl
+*.joblib
+reports/figures/*.png
+!reports/figures/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
