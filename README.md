@@ -66,7 +66,8 @@ python -m pytest                      # 測試（合成資料，免下載）
 - [x] **I3 模型基準**：RF/SVM×雙特徵軌×雙評估協議——自製 43 維 80-83%、官方 561 維 92-95%、官方 split SVM 95.5% 重現原始論文 ~96%（管線驗證）；詳見 [findings](reports/findings.md)
 - [x] **I4 生理整合**：PAMAP2 動作×%HRmax 負荷梯（跳繙 85% > 跑步 82%；家務 55% 逼近走路）——`scripts/run_integration.py`
 - [x] **I5 發表**：[reports/findings.md](reports/findings.md)——誠實驗證 vs 洩漏虛高、瓶頸的生理解釋、負荷梯、限制明列
-- [ ] **v2 客製動作**：手機感測器自採舞蹈/瑜珈/HIIT 動作（優勢：舞蹈背景）
+- [x] **v2 前哨實驗**（2026-11-06）：姿態幾何 6 特徵——49 維官方 split SVM **90.4%**、SITTING 召回 54→80%（假說閉環）；PAMAP2 12 類分類複現 72-74%，靜態混淆跨資料集重現（手部感測器歸因）
+- [ ] **v2 客製動作**：手機感測器自採舞蹈/瑜珈/HIIT 動作（優勢：舞蹈背景；感測器位置定腰/胸——PAMAP2 復現結論）
 - [ ] **v2 實機端**：HRV（RR-interval）分析，接智慧手錶
 
 ## 📄 Data Sources · 資料來源

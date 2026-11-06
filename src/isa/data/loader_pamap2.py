@@ -63,3 +63,71 @@ def load_all_protocol(data_dir) -> pd.DataFrame:
         raise FileNotFoundError(
             f"no subject10*.dat under {data_dir} — run fetch_data first")
     return pd.concat(frames, ignore_index=True)
+
+
+# ---------------------------------------------------------------------------
+# 分類複現用：PAMAP2 → UCI 相容視窗（item-2 實驗）
+# ---------------------------------------------------------------------------
+
+FS_PAMAP2 = 100
+WINDOW = 128        # 2.56s @50Hz（與 UCI 相同時間解析度）
+STRIDE = 64
+GRAVITY_WIN = 50    # 0.5s @100Hz 低通估重力
+
+
+def _decimate2(arr: np.ndarray) -> np.ndarray:
+    """100Hz → 50Hz：成對取平均（簡易抗混疊）."""
+    n = len(arr) // 2 * 2
+    return arr[:n].reshape(n // 2, 2, -1).mean(axis=1)
+
+
+def load_pamap2_windows(data_dir, window: int = WINDOW,
+                        stride: int = STRIDE) -> tuple:
+    """PAMAP2 Protocol → UCI 相容視窗 (N, 9, 128)＋labels＋subject ids.
+
+    布局映射 UCI：0-2 body_acc（重力已除）、3-5 gyro（本分析未用，填 0）、
+    6-8 total_acc（body＋重力估計回填）——time/freq/posture 特徵全沿用.
+    逐受試者逐連續活動區塊切窗；activity 0（transient）與含 NaN 的列丟棄.
+    """
+    import pandas as pd
+    all_w, all_y, all_g = [], [], []
+    for path in sorted(data_dir.glob("subject10*.dat")):
+        sid = int(path.stem.replace("subject", ""))
+        if sid > 109:
+            continue
+        df = pd.read_csv(path, sep=r"\s+", header=None,
+                         usecols=[1, 4, 5, 6],
+                         names=["activity", "acc_x", "acc_y", "acc_z"],
+                         na_values="NaN").dropna()
+        df = df[df["activity"] != TRANSIENT]
+        if df.empty:
+            continue
+        acc = df[["acc_x", "acc_y", "acc_z"]].to_numpy()
+        acts = df["activity"].to_numpy()
+        # 連續活動區塊
+        change = np.flatnonzero(np.diff(acts) != 0) + 1
+        for start, end in zip(np.r_[0, change], np.r_[change, len(acts)]):
+            if acts[start] not in PAMAP2_ACTIVITIES:
+                continue
+            block = acc[start:end]
+            if len(block) < FS_PAMAP2 * 3:   # <3 秒的區塊不可靠，略過
+                continue
+            # 重力分離（低通）→ body；total＝body＋重力（UCI 布局）
+            gravity = (pd.DataFrame(block)
+                       .rolling(GRAVITY_WIN, center=True, min_periods=1)
+                       .mean().to_numpy())
+            body = block - gravity
+            total = body + gravity
+            # 100→50Hz、切窗（body/total 各自同步）
+            b50 = _decimate2(body)
+            t50 = _decimate2(total)
+            for s in range(0, len(b50) - window + 1, stride):
+                w = np.zeros((9, window), dtype=np.float32)
+                w[0:3, :] = b50[s:s + window].T
+                w[6:9, :] = t50[s:s + window].T
+                all_w.append(w)
+                all_y.append(int(acts[start]))
+                all_g.append(sid)
+    if not all_w:
+        raise ValueError("no windows built — check data/filtering")
+    return np.stack(all_w), np.asarray(all_y), np.asarray(all_g)

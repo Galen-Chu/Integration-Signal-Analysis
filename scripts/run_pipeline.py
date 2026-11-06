@@ -24,13 +24,16 @@ from src.isa.viz.plots import plot_confusion  # noqa: E402
 
 
 def build_features(split: str, kind: str) -> np.ndarray:
-    if kind in ("ours", "both"):
+    from src.isa.features.posture import extract_posture_features
+    if kind in ("ours", "ours2", "both"):
         windows = load_raw_signals(UCI_DIR, split)
         print(f"[{split}] raw windows: {windows.shape} → extracting features…")
         ours = np.hstack([extract_time_features(windows),
                           extract_freq_features(windows)])
     if kind == "ours":
         return ours
+    if kind == "ours2":
+        return np.hstack([ours, extract_posture_features(windows)])
     official = load_uci_features(UCI_DIR, split)
     if kind == "uci":
         return official
@@ -55,9 +58,10 @@ def finish(reports: dict, args) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="HAR 管線：特徵→模型→評估")
-    parser.add_argument("--features", choices=["ours", "uci", "both"],
+    parser.add_argument("--features", choices=["ours", "ours2", "uci", "both"],
                         default="ours",
-                        help="特徵來源（ours=自製時域+頻域；uci=官方561；both=併）")
+                        help="ours=時域+頻域(43)；ours2=+姿態幾何(49)；"
+                             "uci=官方561；both=ours+uci")
     parser.add_argument("--models", nargs="+", default=["rf", "svm"])
     parser.add_argument("--split", choices=["cv", "official"], default="cv",
                         help="cv=GroupKFold 5 折（訓練集內）；official=官方 test"
