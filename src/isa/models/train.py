@@ -56,3 +56,31 @@ def subject_cv_evaluate(X, y, groups, kind: str = "rf", n_splits: int = 5,
         "n_train_windows": int(len(y)),
         "n_subjects": int(len(np.unique(groups))),
     }
+
+
+def evaluate_holdout(X_train, y_train, X_test, y_test, groups_train,
+                     kind: str = "rf", random_state: int = 42) -> dict:
+    """官方 held-out 評估：訓練集全量擬合、測試集一次評估.
+
+    UCI HAR 的官方 train/test 本身就是受試者不重疊（21/9 人）——
+    此模式可與文獻在相同條件下的數字直接對照.
+    """
+    import numpy as np
+    from sklearn.metrics import confusion_matrix, f1_score
+
+    # 受試者 disjoint 由呼叫端保證（UCI 官方切分本身即 subject-wise）
+    model = make_model(kind, random_state)
+    model.fit(X_train, y_train)
+    pred = model.predict(X_test)
+    labels = np.unique(np.concatenate([y_train, y_test]))
+    cm = confusion_matrix(y_test, pred, labels=labels)
+    return {
+        "model": kind,
+        "split": "official-holdout",
+        "accuracy": float((pred == y_test).mean()),
+        "macro_f1": float(f1_score(y_test, pred, average="macro")),
+        "confusion_matrix": cm.tolist(),
+        "labels": labels.tolist(),
+        "n_train": int(len(y_train)),
+        "n_test": int(len(y_test)),
+    }

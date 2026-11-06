@@ -12,8 +12,7 @@ data/processed/*.csv
 # Artifacts
 *.pkl
 *.joblib
-reports/figures/*.png
-!reports/figures/.gitkeep
+# findings 的圖是敘事資產，隨 repo（cv_report JSON 同）
 
 # Jupyter
 .ipynb_checkpoints/

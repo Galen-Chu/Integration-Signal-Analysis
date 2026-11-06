@@ -63,7 +63,7 @@ python -m pytest                      # 測試（合成資料，免下載）
 
 - [x] **I1 資料層**：UCI 下載/載入（迷你 fixture 測試）、Fitbit 心率載入
 - [x] **I2 特徵工程**：時域統計＋FFT 頻域（主頻/質心/步頻帶/熵）＋合成訊號精確值測試
-- [x] **I3 模型基準**：RF/SVM＋subject-wise GroupKFold＋混淆矩陣
+- [x] **I3 模型基準**：RF/SVM×雙特徵軌×雙評估協議——自製 43 維 80-83%、官方 561 維 92-95%、官方 split SVM 95.5% 重現原始論文 ~96%（管線驗證）；詳見 [findings](reports/findings.md)
 - [x] **I4 生理整合**：PAMAP2 動作×%HRmax 負荷梯（跳繙 85% > 跑步 82%；家務 55% 逼近走路）——`scripts/run_integration.py`
 - [x] **I5 發表**：[reports/findings.md](reports/findings.md)——誠實驗證 vs 洩漏虛高、瓶頸的生理解釋、負荷梯、限制明列
 - [ ] **v2 客製動作**：手機感測器自採舞蹈/瑜珈/HIIT 動作（優勢：舞蹈背景）

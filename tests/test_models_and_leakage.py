@@ -2,7 +2,8 @@
 import numpy as np
 from sklearn.model_selection import GroupKFold
 
-from src.isa.models.train import make_model, subject_cv_evaluate
+from src.isa.models.train import (evaluate_holdout, make_model,
+                                    subject_cv_evaluate)
 
 
 def _synthetic_dataset(n_subjects=20, per_subject=10, seed=0):
@@ -50,3 +51,19 @@ class TestModels:
         import pytest
         with pytest.raises(ValueError):
             make_model("xgboost")
+
+
+class TestHoldout:
+    def test_evaluate_holdout_report_shape(self):
+        X, y, groups = _synthetic_dataset(n_subjects=12, per_subject=8)
+        # 前 10 人訓練、後 2 人測試（受試者不重疊）
+        tr_mask = groups <= 9
+        te_mask = groups > 9
+        report = evaluate_holdout(X[tr_mask], y[tr_mask], X[te_mask], y[te_mask],
+                                  groups[tr_mask], kind="rf")
+        assert report["split"] == "official-holdout"
+        assert report["n_train"] == int(tr_mask.sum())
+        assert report["n_test"] == int(te_mask.sum())
+        # 合成資料可分離 → accuracy 應高
+        assert report["accuracy"] > 0.95
+        assert len(report["confusion_matrix"]) == 2
