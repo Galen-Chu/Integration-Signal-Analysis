@@ -1,0 +1,11 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["data", "notebooks"]
+
+[tool.ruff.lint]
+# E/W pycodestyle、F pyflakes、I isort、B bugbear、UP pyupgrade
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "scripts"]

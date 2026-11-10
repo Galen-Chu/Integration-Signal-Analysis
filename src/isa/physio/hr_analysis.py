@@ -27,7 +27,6 @@ def hr_recovery(hr: pd.Series, times: pd.Series,
     HRR < 12 bpm/1min 是疲勞/心血管風險的經典門檻.
     回傳 None 表示資料不足（視窗內無後續心率）.
     """
-    mask_after = times > anchor
     baseline_mask = (times > anchor) & (times <= anchor + pd.Timedelta(minutes=minutes))
     if not baseline_mask.any():
         return None

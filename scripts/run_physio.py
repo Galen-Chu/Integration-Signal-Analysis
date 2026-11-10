@@ -16,9 +16,11 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from src.isa.config import FIGURES_DIR, PROCESSED_DIR, RAW_DIR  # noqa: E402
-from src.isa.physio.hr_analysis import (daily_load_summary,  # noqa: E402
-                                        hr_recovery,
-                                        hr_zone_percentages)
+from src.isa.physio.hr_analysis import (  # noqa: E402
+    daily_load_summary,
+    hr_recovery,
+    hr_zone_percentages,
+)
 from src.isa.viz.plots import plot_hr_timeline  # noqa: E402
 
 FITBIT_DIR = RAW_DIR / "fitbit"
@@ -31,8 +33,7 @@ def load_minute_hr(fitbit_dir: Path) -> pd.DataFrame:
         for path in sorted(fitbit_dir.rglob(f"{pattern}.csv")):
             df = pd.read_csv(path)
             df.columns = [c.strip() for c in df.columns]
-            if "ActivityMinute" in df.columns:      # minute 版欄位
-                time_col, hr_col = "ActivityMinute", "Calories"  # placeholder
+            if "ActivityMinute" in df.columns:      # minute 版欄位（此管線不用）
                 continue
             df["Time"] = pd.to_datetime(df["Time"])
             frames.append(df[["Id", "Time", "Value"]])
@@ -60,7 +61,7 @@ def main():
         per_user.append({"Id": int(uid), **zones, **load})
 
         # 每日峰值後的 HRR（取每天最大心率時點，往後 1 分鐘）
-        for day, day_hr in grp.groupby(grp["Time"].dt.date):
+        for _day, day_hr in grp.groupby(grp["Time"].dt.date):
             anchor_idx = day_hr["hr"].idxmax()
             anchor = day_hr.loc[anchor_idx]
             hrr = hr_recovery(grp["hr"], grp["Time"], anchor=anchor["Time"])

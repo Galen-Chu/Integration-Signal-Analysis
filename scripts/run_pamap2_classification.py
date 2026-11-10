@@ -13,8 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np  # noqa: E402
 
 from src.isa.config import FIGURES_DIR, PROCESSED_DIR, RAW_DIR  # noqa: E402
-from src.isa.data.loader_pamap2 import (PAMAP2_ACTIVITIES,  # noqa: E402
-                                        load_pamap2_windows)
+from src.isa.data.loader_pamap2 import PAMAP2_ACTIVITIES, load_pamap2_windows  # noqa: E402
 from src.isa.features.freq_domain import extract_freq_features  # noqa: E402
 from src.isa.features.posture import extract_posture_features  # noqa: E402
 from src.isa.features.time_domain import extract_time_features  # noqa: E402
@@ -29,7 +28,8 @@ def main():
 
     print("Building UCI-compatible windows from PAMAP2 Protocol…")
     windows, y, groups = load_pamap2_windows(data_dir)
-    counts = {PAMAP2_ACTIVITIES[k]: int(v) for k, v in zip(*np.unique(y, return_counts=True))}
+    counts = {PAMAP2_ACTIVITIES[k]: int(v)
+              for k, v in zip(*np.unique(y, return_counts=True), strict=True)}
     print(f"windows: {windows.shape}, subjects: {sorted(np.unique(groups).tolist())}")
     print("windows/activity:", counts)
 
@@ -48,7 +48,7 @@ def main():
 
     # 靜態對（sitting/standing/lying）召回——複現檢驗的核心
     labels = reports["rf"]["labels"]
-    names = [PAMAP2_ACTIVITIES[int(l)] for l in labels]
+    names = [PAMAP2_ACTIVITIES[int(code)] for code in labels]
     for kind in ("rf", "svm"):
         cm = np.array(reports[kind]["confusion_matrix"])
         recall = cm.diagonal() / cm.sum(axis=1)

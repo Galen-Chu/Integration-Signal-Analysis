@@ -15,8 +15,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np  # noqa: E402
 
 from src.isa.config import FIGURES_DIR, PROCESSED_DIR, UCI_DIR  # noqa: E402
-from src.isa.data.loader import (load_labels, load_raw_signals,  # noqa: E402
-                                 load_subjects, load_uci_features)
+from src.isa.data.loader import (  # noqa: E402
+    load_labels,
+    load_raw_signals,
+    load_subjects,
+    load_uci_features,
+)
 from src.isa.features.freq_domain import extract_freq_features  # noqa: E402
 from src.isa.features.time_domain import extract_time_features  # noqa: E402
 from src.isa.models.train import evaluate_holdout, subject_cv_evaluate  # noqa: E402
@@ -46,7 +50,7 @@ def finish(reports: dict, args) -> None:
     out = PROCESSED_DIR / f"report_{args.split}_{args.features}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     labels = reports[args.models[0]]["labels"]
-    names = [ACTIVITY_LABELS[int(l)] for l in labels]
+    names = [ACTIVITY_LABELS[int(code)] for code in labels]
     for kind in args.models:
         cm = np.array(reports[kind]["confusion_matrix"])
         plot_confusion(cm, labels, names,

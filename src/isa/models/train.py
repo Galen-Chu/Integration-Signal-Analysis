@@ -4,11 +4,30 @@
 本專案一律 GroupKFold（groups=受試者編號），這是結果可信的根基.
 """
 import numpy as np
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+
+
+class _ZeroBasedWrapper(BaseEstimator, ClassifierMixin):
+    """把任意整數標籤映射到 0 起始再交給內部分類器（XGBoost 的要求）.
+
+    UCI HAR 活動代碼 1-6、PAMAP2 1-24——直接餵 XGBClassifier 會拒絕.
+    """
+
+    def __init__(self, base):
+        self.base = base
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        self.base.fit(X, np.searchsorted(self.classes_, y))
+        return self
+
+    def predict(self, X):
+        return self.classes_[self.base.predict(X)]
 
 
 def make_model(kind: str = "rf", random_state: int = 42):
@@ -20,6 +39,17 @@ def make_model(kind: str = "rf", random_state: int = 42):
             ("scale", StandardScaler()),
             ("svm", SVC(kernel="rbf", C=10, random_state=random_state)),
         ])
+    if kind == "xgb":
+        from xgboost import XGBClassifier  # 延遲匯入：無 xgboost 環境仍可用其餘模型
+
+        return _ZeroBasedWrapper(Pipeline([
+            ("scale", StandardScaler()),
+            ("xgb", XGBClassifier(
+                n_estimators=400, max_depth=6, learning_rate=0.2,
+                subsample=0.9, colsample_bytree=0.9,
+                eval_metric="mlogloss", random_state=random_state,
+                n_jobs=-1)),
+        ]))
     raise ValueError(f"unknown model kind: {kind}")
 
 
