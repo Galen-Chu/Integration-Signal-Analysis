@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.isa.config import RAW_DIR  # noqa: E402
-from src.isa.data.download import (download_fitbit, download_uci)  # noqa: E402
+from src.isa.data.download import download_fitbit, download_uci  # noqa: E402
 
 
 def main():

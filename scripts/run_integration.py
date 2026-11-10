@@ -18,10 +18,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-from src.isa.config import (DEFAULT_MAX_HR, FIGURES_DIR,  # noqa: E402
-                            PROCESSED_DIR, RAW_DIR)
-from src.isa.data.loader_pamap2 import (PAMAP2_ACTIVITIES,  # noqa: E402
-                                        load_all_protocol)
+from src.isa.config import DEFAULT_MAX_HR, FIGURES_DIR, PROCESSED_DIR, RAW_DIR  # noqa: E402
+from src.isa.data.loader_pamap2 import PAMAP2_ACTIVITIES, load_all_protocol  # noqa: E402
 
 
 def main():

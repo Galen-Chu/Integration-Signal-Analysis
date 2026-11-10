@@ -2,9 +2,7 @@
 import numpy as np
 import pytest
 
-from src.isa.features.posture import (axis_gravity_angles,
-                                      extract_posture_features,
-                                      gravity_vector)
+from src.isa.features.posture import axis_gravity_angles, extract_posture_features, gravity_vector
 
 
 def _window(gravity, body_noise=0.0, n=128, seed=0):

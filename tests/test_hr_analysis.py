@@ -3,10 +3,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.isa.physio.hr_analysis import (daily_load_summary,
-                                        hr_recovery,
-                                        hr_zone_percentages,
-                                        load_fitbit_heartrate)
+from src.isa.physio.hr_analysis import (
+    daily_load_summary,
+    hr_recovery,
+    hr_zone_percentages,
+    load_fitbit_heartrate,
+)
 
 
 def _hr_series(values):

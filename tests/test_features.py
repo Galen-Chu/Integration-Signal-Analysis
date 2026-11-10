@@ -1,13 +1,15 @@
 """特徵工程測試——合成訊號、精確數值基準."""
 import numpy as np
 
-from src.isa.features.freq_domain import (band_energy_ratio, combine,
-                                          dominant_frequency_hz,
-                                          extract_freq_features,
-                                          spectral_centroid_hz,
-                                          spectral_entropy)
-from src.isa.features.time_domain import (extract_time_features,
-                                          sma_3d)
+from src.isa.features.freq_domain import (
+    band_energy_ratio,
+    combine,
+    dominant_frequency_hz,
+    extract_freq_features,
+    spectral_centroid_hz,
+    spectral_entropy,
+)
+from src.isa.features.time_domain import extract_time_features, sma_3d
 
 FS = 50
 T = np.arange(128) / FS

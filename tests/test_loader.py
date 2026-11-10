@@ -2,8 +2,7 @@
 import numpy as np
 import pytest
 
-from src.isa.data.loader import (SIGNALS, load_labels, load_raw_signals,
-                                 load_subjects)
+from src.isa.data.loader import SIGNALS, load_labels, load_raw_signals, load_subjects
 
 
 @pytest.fixture

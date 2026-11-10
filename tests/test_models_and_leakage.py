@@ -2,8 +2,7 @@
 import numpy as np
 from sklearn.model_selection import GroupKFold
 
-from src.isa.models.train import (evaluate_holdout, make_model,
-                                    subject_cv_evaluate)
+from src.isa.models.train import evaluate_holdout, make_model, subject_cv_evaluate
 
 
 def _synthetic_dataset(n_subjects=20, per_subject=10, seed=0):
