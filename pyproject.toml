@@ -1,3 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "integration-signal-analysis"
+version = "2.0.0"
+description = "HAR x physiological-load integration — activity recognition, HR load ladder and IMU-position comparison (UCI HAR + PAMAP2)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.0",
+  "scipy>=1.11",
+  "scikit-learn>=1.4",
+  "matplotlib>=3.8",
+  "xgboost>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.setuptools]
+# 匯入慣例是 src.*（repo 根導入，scripts/notebooks/tests 全用此寫法）——
+# 套件名照實宣告；pip install -e . 後 `from src.isa ...` 在任何工作目錄可用
+packages = [
+  "src",
+  "src.isa",
+  "src.isa.data",
+  "src.isa.features",
+  "src.isa.models",
+  "src.isa.physio",
+  "src.isa.viz",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

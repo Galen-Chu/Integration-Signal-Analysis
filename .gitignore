@@ -20,3 +20,8 @@ data/processed/*.csv
 # OS
 .DS_Store
 Thumbs.db
+
+# Python packaging build artifacts
+*.egg-info/
+build/
+dist/
