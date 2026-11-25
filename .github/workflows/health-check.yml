@@ -15,9 +15,9 @@ jobs:
   fetch-and-load:
     name: UCI + PAMAP2 fetch, load assertions
     runs-on: ubuntu-latest
-    # UCI ~60MB + PAMAP2 ~680MB：首次實測 UCI 就花了 ~13 分鐘，15 分鐘會
-    # 在 PAMAP2 下載中被強制終止——放寬到 30 分鐘
-    timeout-minutes: 30
+    # UCI ~60MB（~13 分鐘）+ PAMAP2 ~680MB（實測 ~390KB/s ≈ 29 分鐘）＋重試
+    # 餘裕——45 分鐘
+    timeout-minutes: 45
     steps:
     - uses: actions/checkout@v7
     - uses: actions/setup-python@v7

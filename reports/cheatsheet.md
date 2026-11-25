@@ -66,7 +66,7 @@ PAMAP2 位置對照證實靜態識別的關鍵變數是感測器位置——這�
 ## 現場可跑的驗證
 
 ```bash
-python -m pytest                        # 69 項測試（合成資料，免下載）
+python -m pytest                        # 72 項測試（合成資料，免下載）
 python scripts/run_pipeline.py          # 主基準：43/49/561 維 × RF/SVM × subject-wise CV
 python scripts/run_pamap2_position.py   # 位置對照（±16g 故障通道的發現過程在 loader 註記）
 ```
