@@ -7,12 +7,13 @@ on:
   workflow_dispatch:
 
 # Pages 部署：錄製頁需要 secure context（https）——GitHub Pages 是零成本解，
-# 讓 app/recorder.html 在真機（iOS Safari/Android Chrome）拿到 DeviceMotion 事件
+# 讓 app/recorder.html 在真機（iOS Safari/Android Chrome）拿到 DeviceMotion 事件.
+# 注意 permissions 只能用 GitHub 認可的鍵（contents/pages/id-token…）——
+# 曾誤放 "administration: write" 導致整個 workflow 被 GitHub 拒收（startup_failure、0 jobs）
 permissions:
   contents: read
   pages: write
   id-token: write
-  administration: write  # configure-pages 的 enablement 需要它開啟 Pages；若組織政策不允許，請在 Settings→Pages 手動開啟
 
 concurrency:
   group: pages
@@ -22,14 +23,14 @@ jobs:
   deploy:
     name: Deploy recorder app
     runs-on: ubuntu-latest
+    # 雙保險：Dependabot 分支改到 workflow 檔時曾繞過 branches 過濾器觸發本檔
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/configure-pages@v5
-      with:
-        enablement: true
     - uses: actions/upload-pages-artifact@v3
       with:
         path: app
