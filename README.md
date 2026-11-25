@@ -74,7 +74,7 @@ python -m pytest                      # 測試（合成資料，免下載）
 
 **下次開發 · Next（2026-11-06 收錄，追蹤於 Issue #2）**
 
-- [ ] **N1 手機自採錄製器**（優先序 1·v2 主線）：**工程完成（2026-11-25）**——`app/recorder.html`：DeviceMotion 錄製頁（iOS 權限手勢流程、50Hz 精確重採樣、gap 切段不內插、128 視窗計數、腰/胸/腕位置指引），核心邏輯有 node 測試進 CI；資料格式契約見 [app/README](app/README.md)。**待 Galen 真機採集**（需 https：GitHub Pages 或本機 localhost 驗證）
+- [ ] **N1 手機自採錄製器**（優先序 1·v2 主線）：**工程完成＋已上線（2026-11-25）**——`app/recorder.html`：DeviceMotion 錄製頁（iOS 權限手勢流程、50Hz 精確重採樣、gap 切段不內插、128 視窗計數、腰/胸/腕位置指引），核心邏輯有 node 測試進 CI；資料格式契約見 [app/README](app/README.md)。**正式網址**：<https://galen-chu.github.io/Integration-Signal-Analysis/recorder.html>——**待 Galen 真機採集**（10 秒試拍 → 檢查 CSV/meta → 正式錄，每活動 ≥60 秒）
 - [x] **N2 選擇性特徵移植**（負結果·2026-11-10）：ECDF/頻帶能量/jerk 單一家族皆買不到剩餘 5pp（jerk +0.4pp 代價 43 維）——49 維＝精簡集最適解，剩餘差距屬官方 17 家族工程廣度；見 findings N2 節
 - [x] **N3 Notebooks 01/02/04 填實**（2026-11-25）：EDA（訊號長相/步頻指紋/受試者變異）、特徵與模型戰績（49 維故事的真實數字重現）、生理整合（分區/HRR/每日負荷，Fitbit 缺席時自動以 PAMAP2 Protocol 場次示範）——已執行存出輸出；03 的 Protocol 路徑地雷（glob 誤抓 Optional 場次）一併修正
 - [x] **N4 小項批次**（2026-11-10）：CI 加 ruff、每受試者準確率分布圖、XGBoost 第三模型對照（561 維 94.2% 仍不敵 SVM 95.5%——瓶頸在特徵不在模型）
