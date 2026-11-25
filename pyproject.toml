@@ -1,7 +1,9 @@
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-exclude = ["data", "notebooks"]
+# "/data" 錨定專案根目錄的原始資料夾——裸 "data" 會連 src/isa/data/ 子套件
+# 一起排除（ruff exclude 對任意層級同名目錄生效）
+exclude = ["/data", "notebooks"]
 
 [tool.ruff.lint]
 # E/W pycodestyle、F pyflakes、I isort、B bugbear、UP pyupgrade

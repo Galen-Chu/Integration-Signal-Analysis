@@ -13,6 +13,16 @@ def _mad(x: np.ndarray) -> float:
     return float(np.median(np.abs(x - np.median(x))))
 
 
+def _safe_corr(a: np.ndarray, b: np.ndarray) -> float:
+    """軸間相關；任一軸凍結（std=0，如 PAMAP2 胸/踝 ±16g 故障通道）→ 0.
+
+    np.corrcoef 對常數陣列回傳 NaN（0/0）——下游模型拒收，改定義為「無共變資訊」.
+    """
+    if a.std() < 1e-9 or b.std() < 1e-9:
+        return 0.0
+    return float(np.corrcoef(a, b)[0, 1])
+
+
 def _sma_axis(x: np.ndarray) -> float:
     """Signal magnitude area（單軸）：|x| 積分／樣本數."""
     return float(np.sum(np.abs(x)) / len(x))
@@ -45,7 +55,6 @@ def extract_time_features(windows: np.ndarray) -> np.ndarray:
                 float(np.sum(sig ** 2) / len(sig)),
                 _sma_axis(sig),
             ]
-        corr = [float(np.corrcoef(a, b)[0, 1])
-                for a, b in ((bx, by), (bx, bz), (by, bz))]
+        corr = [_safe_corr(a, b) for a, b in ((bx, by), (bx, bz), (by, bz))]
         rows.append(per_signal + corr)
     return np.asarray(rows, dtype=np.float32)

@@ -55,7 +55,7 @@ def download_fitbit(raw_dir: Path) -> Path:
         import kagglehub
     except ImportError:
         print("請先 pip install kagglehub，或見 README 手動下載指引。")
-        raise SystemExit(2)
+        raise SystemExit(2) from None     # 已給使用者友善訊息，不必鏈結堆疊
 
     print(f"Fetching {FITBIT_DATASET} via kagglehub …")
     path = Path(kagglehub.dataset_download(FITBIT_DATASET))

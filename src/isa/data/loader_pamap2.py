@@ -2,7 +2,7 @@
 
 檔案格式：subject{1..9}{0,1}.dat，空白分隔；
 col 1=timestamp(s) · col 2=activityID · col 3=heart rate(bpm) ·
-col 4-19 手部 IMU（col4 溫度、col5-7 ±6g 加速度計 xyz）
+col 4-19 手部 IMU（col4 溫度、col5-7 ±16g 加速度計 xyz；±6g 在 col8-10，未用）
 官方缺值以 NaN 表示；activityID=0 為 transient（不分析）.
 """
 import numpy as np
@@ -74,6 +74,17 @@ WINDOW = 128        # 2.56s @50Hz（與 UCI 相同時間解析度）
 STRIDE = 64
 GRAVITY_WIN = 50    # 0.5s @100Hz 低通估重力
 
+# 三個 IMU 位置的加速度計欄（0-based）。每位置有兩顆加速度計：
+# ±16g（官方 1-based col5-7/21-23/37-39 → 0-based 4-6/20-22/36-38）與
+# ±6g（col8-10/24-26/40-42 → 0-based 7-9/23-25/39-41）。
+# ±16g 已知通道故障（官方文件載明；實測 9/9 受試者區塊內 diff==0≈100% 確認）：
+# chest 的 x 軸與 ankle 的 y 軸全數凍結——三位置對照實驗因此用 ±6g 顆粒
+# （三位置全軸健康），對照只動「位置」一個變數。預設 16g 維持既有基線.
+POSITION_ACC_COLS = {
+    "16g": {"hand": (4, 5, 6), "chest": (20, 21, 22), "ankle": (36, 37, 38)},
+    "6g": {"hand": (7, 8, 9), "chest": (23, 24, 25), "ankle": (39, 40, 41)},
+}
+
 
 def _decimate2(arr: np.ndarray) -> np.ndarray:
     """100Hz → 50Hz：成對取平均（簡易抗混疊）."""
@@ -82,21 +93,31 @@ def _decimate2(arr: np.ndarray) -> np.ndarray:
 
 
 def load_pamap2_windows(data_dir, window: int = WINDOW,
-                        stride: int = STRIDE) -> tuple:
+                        stride: int = STRIDE,
+                        position: str = "hand", scale: str = "16g") -> tuple:
     """PAMAP2 Protocol → UCI 相容視窗 (N, 9, 128)＋labels＋subject ids.
 
+    position：IMU 位置（hand/chest/ankle）；scale：加速度計顆粒（16g/6g）
+    ——感測器位置對照實驗用；預設 hand＋16g＝既有基線，行為不變.
     布局映射 UCI：0-2 body_acc（重力已除）、3-5 gyro（本分析未用，填 0）、
     6-8 total_acc（body＋重力估計回填）——time/freq/posture 特徵全沿用.
     逐受試者逐連續活動區塊切窗；activity 0（transient）與含 NaN 的列丟棄.
     """
     import pandas as pd
+    if scale not in POSITION_ACC_COLS:
+        raise ValueError(f"unknown scale: {scale!r} "
+                         f"(choose from {sorted(POSITION_ACC_COLS)})")
+    if position not in POSITION_ACC_COLS[scale]:
+        raise ValueError(f"unknown position: {position!r} "
+                         f"(choose from {sorted(POSITION_ACC_COLS[scale])})")
+    acc_cols = POSITION_ACC_COLS[scale][position]
     all_w, all_y, all_g = [], [], []
     for path in sorted(data_dir.glob("subject10*.dat")):
         sid = int(path.stem.replace("subject", ""))
         if sid > 109:
             continue
         df = pd.read_csv(path, sep=r"\s+", header=None,
-                         usecols=[1, 4, 5, 6],
+                         usecols=[1, *acc_cols],
                          names=["activity", "acc_x", "acc_y", "acc_z"],
                          na_values="NaN").dropna()
         df = df[df["activity"] != TRANSIENT]
@@ -106,7 +127,8 @@ def load_pamap2_windows(data_dir, window: int = WINDOW,
         acts = df["activity"].to_numpy()
         # 連續活動區塊
         change = np.flatnonzero(np.diff(acts) != 0) + 1
-        for start, end in zip(np.r_[0, change], np.r_[change, len(acts)]):
+        for start, end in zip(np.r_[0, change], np.r_[change, len(acts)],
+                              strict=True):
             if acts[start] not in PAMAP2_ACTIVITIES:
                 continue
             block = acc[start:end]

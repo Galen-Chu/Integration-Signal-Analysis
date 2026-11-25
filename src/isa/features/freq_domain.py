@@ -4,11 +4,12 @@ from scipy.fft import rfft
 
 from src.isa.config import SAMPLING_RATE
 
+# 命名順序必須與 extract_freq_features 的提取順序一致：
+# 每個訊號依序產生 domfreq/centroid/band/entropy 四欄（交錯，非逐特徵分組）
 FEATURE_NAMES = [
-    *[f"{sig}_domfreq_hz" for sig in ["acc_x", "acc_y", "acc_z", "acc_mag"]],
-    *[f"{sig}_centroid_hz" for sig in ["acc_x", "acc_y", "acc_z", "acc_mag"]],
-    *[f"{sig}_band1_3hz_ratio" for sig in ["acc_x", "acc_y", "acc_z", "acc_mag"]],
-    *[f"{sig}_spectral_entropy" for sig in ["acc_x", "acc_y", "acc_z", "acc_mag"]],
+    f"{sig}_{feat}" for sig in ["acc_x", "acc_y", "acc_z", "acc_mag"]
+    for feat in ["domfreq_hz", "centroid_hz", "band1_3hz_ratio",
+                 "spectral_entropy"]
 ]
 
 
@@ -20,11 +21,15 @@ def dominant_frequency_hz(x: np.ndarray, fs: int = SAMPLING_RATE) -> float:
 
 
 def spectral_centroid_hz(x: np.ndarray, fs: int = SAMPLING_RATE) -> float:
-    """頻譜質心：能量加權平均頻率（動作節奏快慢的指紋）."""
+    """頻譜質心：能量加權平均頻率（動作節奏快慢的指紋）.
+
+    全零訊號（凍結軸去重力後的殘差）定義為 0——0/0 無定義且下游模型拒收 NaN.
+    """
     spectrum = np.abs(rfft(x))
     freqs = np.fft.rfftfreq(len(x), d=1 / fs)
     power = spectrum ** 2
-    return float((freqs * power).sum() / power.sum())
+    total = power.sum()
+    return float((freqs * power).sum() / total) if total > 0 else 0.0
 
 
 def band_energy_ratio(x: np.ndarray, lo: float, hi: float,

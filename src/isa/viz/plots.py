@@ -73,3 +73,79 @@ def plot_hr_timeline(hr: np.ndarray, times, out_path, title: str = "Heart rate")
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
+
+
+# dataviz 參考調色盤類別槽 1-3（前三槽通過 all-pairs CVD 驗證）＋墨色/格線 token
+POSITION_COLORS = {"hand": "#2a78d6", "chest": "#eb6834", "ankle": "#1baf7a"}
+INK = "#0b0b0b"
+INK_2 = "#52514e"
+GRID = "#e1e0d9"
+
+
+def plot_position_comparison(results: dict, out_path, activity_names: dict,
+                             static=("lying", "sitting", "standing")):
+    """IMU 位置對照圖：左＝總體準確率（×模型）、右＝靜態召回（SVM）.
+
+    results: {position: {"rf": report, "svm": report}}——subject_cv_evaluate 輸出；
+    activity_names: 活動代碼→名稱（呼叫端提供，viz 不依賴 data 層）.
+    全圖共用「位置」一種顏色語義（dataviz：顏色跟著實體），單一圖例.
+    """
+    positions = [p for p in ("hand", "chest", "ankle") if p in results]
+    models = [m for m in ("rf", "svm") if m in results[positions[0]]]
+    name_of = {"hand": "Hand", "chest": "Chest", "ankle": "Ankle"}
+
+    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(10, 4.2))
+
+    # 左：總體準確率——x=模型、每組三條（位置）；誤差線＝折間 std；
+    # 數值標籤放誤差線上緣之上，避免打架
+    x = np.arange(len(models))
+    w = 0.24
+    for i, pos in enumerate(positions):
+        means = [results[pos][m]["mean_accuracy"] for m in models]
+        stds = [results[pos][m]["std_accuracy"] for m in models]
+        bars = ax_a.bar(x + (i - 1) * w, means, width=w, color=POSITION_COLORS[pos],
+                        label=name_of[pos], zorder=3)
+        ax_a.errorbar(x + (i - 1) * w, means, yerr=stds, fmt="none",
+                      ecolor=INK_2, elinewidth=1, capsize=2, zorder=4)
+        for rect, mean, std in zip(bars, means, stds, strict=True):
+            ax_a.text(rect.get_x() + rect.get_width() / 2, mean + std + 0.032,
+                      f"{mean:.1%}", ha="center", va="bottom", fontsize=8,
+                      color=INK)
+    ax_a.set_xticks(x, [m.upper() for m in models])
+    ax_a.set_ylim(0, 1.0)
+    ax_a.yaxis.set_major_formatter(lambda v, _p: f"{v:.0%}")
+    ax_a.set_title("Overall accuracy (12 activities)", fontsize=10.5)
+
+    # 右：靜態召回（SVM 總和混淆矩陣）——x=活動、每組三條（位置）
+    svm_labels = results[positions[0]]["svm"]["labels"]
+    code_of = {v: k for k, v in activity_names.items()}
+    x2 = np.arange(len(static))
+    for i, pos in enumerate(positions):
+        cm = np.array(results[pos]["svm"]["confusion_matrix"])
+        recall = dict(zip(svm_labels, cm.diagonal() / cm.sum(axis=1), strict=True))
+        vals = [recall[code_of[a]] for a in static]
+        bars = ax_b.bar(x2 + (i - 1) * w, vals, width=w, color=POSITION_COLORS[pos],
+                        label=name_of[pos], zorder=3)
+        ax_b.bar_label(bars, labels=[f"{v:.0%}" for v in vals],
+                       fontsize=8, color=INK, padding=2)
+    ax_b.set_xticks(x2, [a.replace("_", " ") for a in static])
+    ax_b.set_ylim(0, 1.12)
+    ax_b.yaxis.set_major_formatter(lambda v, _p: f"{v:.0%}")
+    ax_b.set_title("Static recall · SVM (the confusion that matters)", fontsize=10.5)
+
+    for ax in (ax_a, ax_b):
+        for side in ("top", "right", "left"):
+            ax.spines[side].set_visible(False)
+        ax.spines["bottom"].set_color("#c3c2b7")
+        ax.yaxis.grid(True, lw=0.5, color=GRID, zorder=0)
+        ax.set_axisbelow(True)
+        ax.tick_params(colors=INK_2, labelsize=9)
+
+    fig.suptitle("PAMAP2 · IMU position comparison (subject-wise 5-fold CV)",
+                 fontsize=11.5, color=INK, y=1.0)
+    handles, labels = ax_a.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncols=3, frameon=False,
+               fontsize=9, bbox_to_anchor=(0.5, 0.94))
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
