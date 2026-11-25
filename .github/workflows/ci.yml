@@ -38,3 +38,14 @@ jobs:
 
     - name: Run tests
       run: python -m pytest -v
+
+  recorder-logic:
+    name: Recorder core (node)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Recorder core logic tests
+      run: node app/test/recorder_core.test.mjs

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISA 動作訊號錄製器 · v2 自採</title>
+<script src="recorder_core.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb; --page: #f9f9f7;
+    --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --line: #c3c2b7;
+    --blue: #2a78d6; --orange: #eb6834;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px; background: var(--page); color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .sub { color: var(--ink2); font-size: 13px; margin: 0 0 16px; }
+  .chips { display: flex; gap: 6px; margin: 10px 0 0; flex-wrap: wrap; }
+  .chip {
+    font-size: 12px; color: var(--ink2); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--grid);
+    border-radius: 10px; padding: 14px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 10px; color: var(--ink); }
+  label { display: block; font-size: 13px; color: var(--ink2); margin: 10px 0 4px; }
+  input[type="text"], select {
+    width: 100%; padding: 9px 10px; font-size: 15px; color: var(--ink);
+    background: #fff; border: 1px solid var(--line); border-radius: 8px;
+  }
+  .pos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .pos button {
+    padding: 10px 6px; font-size: 14px; border: 1px solid var(--line);
+    border-radius: 8px; background: #fff; color: var(--ink2); cursor: pointer;
+  }
+  .pos button[aria-pressed="true"] {
+    border-color: var(--blue); color: var(--blue); font-weight: 600;
+    background: #f0f6fd;
+  }
+  .hint { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    padding: 12px 18px; font-size: 15px; border-radius: 8px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.danger { background: #fff; border-color: var(--orange); color: var(--orange); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin-top: 12px;
+  }
+  .stat { background: var(--page); border-radius: 8px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11.5px; color: var(--ink2); }
+  canvas { width: 100%; height: 120px; display: block; margin-top: 12px;
+           background: var(--page); border-radius: 8px; }
+  #msg { font-size: 13px; color: var(--ink2); margin: 10px 0 0; min-height: 18px; }
+  #msg.warn { color: var(--orange); }
+  .summary { font-size: 13px; color: var(--ink2); white-space: pre-line; }
+  a.dl { color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ISA 動作訊號錄製器</h1>
+  <p class="sub">舞蹈／瑜珈／HIIT 自採 · 遷移學習前哨（Integration-Signal-Analysis v2）</p>
+  <div class="chips">
+    <span class="chip">50Hz 精確重採樣</span>
+    <span class="chip">128 樣本視窗相容</span>
+    <span class="chip">腰／胸優先（位置對照結論）</span>
+  </div>
+
+  <div class="card">
+    <h2>1 · 感測器位置（決定靜態動作可分性的第一變數）</h2>
+    <div class="pos" id="posRow">
+      <button type="button" data-pos="waist" aria-pressed="true">腰</button>
+      <button type="button" data-pos="chest" aria-pressed="false">胸</button>
+      <button type="button" data-pos="wrist" aria-pressed="false">腕</button>
+    </div>
+    <p class="hint" id="posHint"></p>
+  </div>
+
+  <div class="card">
+    <h2>2 · 這次錄什麼</h2>
+    <label for="subj">受試者編號</label>
+    <input type="text" id="subj" placeholder="S01" autocomplete="off">
+    <label for="act">活動名稱</label>
+    <input type="text" id="act" list="actList" placeholder="dance_choreo"
+           autocomplete="off">
+    <datalist id="actList">
+      <option value="dance_choreo"><option value="dance_core">
+      <option value="yoga_pose"><option value="hiit_interval">
+      <option value="jump_rope"><option value="walk"><option value="run">
+      <option value="sit"><option value="stand"><option value="lie">
+      <option value="other">
+    </datalist>
+    <p class="hint">單一活動連續錄 60 秒以上（≥23 個 128 視窗）；活動之間按
+      「停止」分段，命名規則見 README。</p>
+  </div>
+
+  <div class="card">
+    <h2>3 · 錄製</h2>
+    <div class="row">
+      <button class="btn primary" id="btnEnable">啟用感測器</button>
+      <button class="btn primary" id="btnStart" disabled>開始錄製</button>
+      <button class="btn danger" id="btnStop" disabled>停止並匯出</button>
+    </div>
+    <p id="msg"></p>
+    <canvas id="spark" width="560" height="120"></canvas>
+    <div class="stats">
+      <div class="stat"><b id="stRate">—</b><span>事件率 Hz</span></div>
+      <div class="stat"><b id="stSamples">0</b><span>原始樣本</span></div>
+      <div class="stat"><b id="stWindows">0</b><span>≈128 視窗</span></div>
+      <div class="stat"><b id="stDrop">0</b><span>丟棄/亂序</span></div>
+    </div>
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <p class="hint">資料只存在本機（匯出前不上傳）。鎖屏會中斷事件——錄製中請保持
+    螢幕開啟；開始時會嘗試申請 Wake Lock。</p>
+</div>
+
+<script>
+"use strict";
+const { SessionRecorder, toCsv, RATE_HZ, WINDOW } = ISARecorderCore;
+
+const $ = (id) => document.getElementById(id);
+const POS_HINTS = {
+  waist: "腰側皮帶夾／腰包固定，手機正面朝外。軀幹姿態（坐/站/躺＋舞蹈核心）的首選位置——UCI 證據 + 位置對照實驗。",
+  chest: "胸帶／胸前口袋固定。與腰同為軀幹位置；PAMAP2 提醒胸帶鬆緊會放大折間變異，務必貼身固定。",
+  wrist: "手腕（手錶位置）。坐/站 74% 可用——軀幹位置不可行時的務實次選；躺姿判別力較弱。",
+};
+let pos = "waist";
+$("posHint").textContent = POS_HINTS.waist;
+$("posRow").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-pos]");
+  if (!b) return;
+  pos = b.dataset.pos;
+  for (const x of $("posRow").children)
+    x.setAttribute("aria-pressed", String(x === b));
+  $("posHint").textContent = POS_HINTS[pos];
+});
+
+let rec = null, listening = false, sessionStart = null, wakeLock = null;
+let lastTs = [];
+
+function msg(text, warn) {
+  $("msg").textContent = text || "";
+  $("msg").className = warn ? "warn" : "";
+}
+
+async function enableSensors() {
+  if (typeof DeviceMotionEvent === "undefined")
+    throw new Error("此瀏覽器不支援 DeviceMotion（需手機 Safari／Chrome）");
+  if (typeof DeviceMotionEvent.requestPermission === "function") {
+    const state = await DeviceMotionEvent.requestPermission();  // iOS 13+：必須在手勢內呼叫
+    if (state !== "granted") throw new Error("iOS 動作感測器權限被拒（" + state + "）");
+  }
+  window.addEventListener("devicemotion", onMotion);
+  listening = true;
+  $("btnEnable").disabled = true;
+  $("btnStart").disabled = false;
+  msg("感測器已啟用——拿起手機晃一下，下方波形與事件率應有反應。");
+}
+
+function onMotion(e) {
+  if (!listening || !rec) return;
+  const t = Date.now();
+  const body = e.acceleration;                       // 已除重力 ≈ body_acc
+  const total = e.accelerationIncludingGravity;      // 含重力 ≈ total_acc
+  rec.addSample(t, body, total);
+  lastTs.push(t);
+  if (lastTs.length > 51) lastTs.shift();
+}
+
+function rateHz() {
+  if (lastTs.length < 6) return null;
+  return (lastTs.length - 1) / (lastTs[lastTs.length - 1] - lastTs[0]) * 1000;
+}
+
+async function startSession() {
+  const subj = $("subj").value.trim() || "S01";
+  const act = $("act").value.trim() || "other";
+  localStorage.setItem("isa_subject", subj);
+  rec = new SessionRecorder();
+  sessionStart = new Date();
+  lastTs = [];
+  try {
+    wakeLock = await navigator.wakeLock?.request?.("screen");
+  } catch (_) { /* Wake Lock 不可用（非 https 或不支援）——提示使用者保持螢幕開啟 */ }
+  $("btnStart").disabled = true;
+  $("btnStop").disabled = false;
+  msg(`錄製中：${subj} · ${act} · ${pos}（請保持手機固定，單活動 ≥60 秒）`);
+  requestAnimationFrame(tick);
+}
+
+function tick() {
+  if (!rec || !listening) return;
+  const r = rateHz();
+  $("stRate").textContent = r ? r.toFixed(0) : "—";
+  $("stSamples").textContent = rec.raw.length;
+  $("stDrop").textContent = `${rec.nullDropped}/${rec.rejected}`;
+  if (sessionStart) {
+    const elapsed = (Date.now() - sessionStart.getTime()) / 1000;
+    $("stWindows").textContent = Math.floor(RATE_HZ * elapsed / WINDOW);
+  }
+  drawSpark();
+  requestAnimationFrame(tick);
+}
+
+function drawSpark() {
+  const cv = $("spark"), ctx = cv.getContext("2d");
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const n = rec ? rec.raw.length : 0;
+  if (n < 2) return;
+  const tail = rec.raw.slice(-250);
+  const vals = tail.map((r) => Math.hypot(r.tx, r.ty, r.tz));
+  const hi = Math.max(...vals, 12), lo = Math.min(...vals, 0);
+  ctx.strokeStyle = "#2a78d6"; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  vals.forEach((v, i) => {
+    const x = i / (vals.length - 1) * (cv.width - 8) + 4;
+    const y = cv.height - 6 - (v - lo) / (hi - lo || 1) * (cv.height - 12);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = "#898781"; ctx.font = "11px system-ui";
+  ctx.fillText(`|total_acc| m/s²  (max ${hi.toFixed(1)})`, 8, 14);
+}
+
+function download(name, text, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function stopSession() {
+  listening = false;
+  $("btnStop").disabled = true;
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+  const resampled = rec.resample();
+  const windows = rec.windowCount(resampled);
+  const subj = ($("subj").value.trim() || "S01").replace(/[^\w-]/g, "");
+  const act = ($("act").value.trim() || "other").replace(/[^\w-]/g, "");
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "").slice(0, 12);
+  const base = `${subj}_${act}_${pos}_${stamp}`;
+  download(`${base}.csv`, toCsv(resampled), "text/csv");
+  const meta = {
+    subject: subj, activity: act, position: pos,
+    nominal_rate_hz: RATE_HZ, window_samples: WINDOW,
+    device: navigator.userAgent,
+    started_at: sessionStart ? sessionStart.toISOString() : null,
+    raw_samples: rec.raw.length,
+    resampled_rows: resampled.length,
+    segments: new Set(resampled.map((r) => r.seg)).size,
+    windows_128: windows,
+    null_dropped: rec.nullDropped, out_of_order_rejected: rec.rejected,
+    format: "t_rel_s,seg,bx,by,bz,tx,ty,tz；bx-bz=body_acc(除重力)，tx-tz=total_acc(含重力)，m/s²，50Hz 線性內插重採樣",
+  };
+  setTimeout(() => download(`${base}.meta.json`,
+    JSON.stringify(meta, null, 2), "application/json"), 400);
+  $("summary").textContent =
+    `完成：原始 ${rec.raw.length} 樣本 → 50Hz 格線 ${resampled.length} 列` +
+    `（${meta.segments} 段）→ ≈${windows} 個 128 視窗\n` +
+    `已下載 ${base}.csv 與 .meta.json（資料只在你的裝置上）`;
+  msg("已停止。回饋：活動之間記得先停止、重新設定活動名再開始。");
+  $("btnStart").disabled = false;
+}
+
+$("subj").value = localStorage.getItem("isa_subject") || "";
+$("btnEnable").addEventListener("click", () =>
+  enableSensors().catch((err) => msg(err.message, true)));
+$("btnStart").addEventListener("click", startSession);
+$("btnStop").addEventListener("click", stopSession);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && rec && listening)
+    msg("⚠ 頁面切到背景——事件可能中斷（會被 gap 切段保護）", true);
+});
+</script>
+</body>
+</html>

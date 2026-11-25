@@ -221,7 +221,7 @@ python scripts/run_integration.py           # 動作×心率負荷梯
 python scripts/run_pipeline.py --features ours2 --split official  # 姿態幾何實驗
 python scripts/run_pamap2_classification.py  # 分類複現（12 活動）
 python scripts/run_pamap2_position.py        # IMU 位置對照（手/胸/踝）
-python -m pytest                            # 53 項測試
+python -m pytest                            # 57 項測試
 ```
 
 ## 五、v2 藍圖
