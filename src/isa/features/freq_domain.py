@@ -1,4 +1,5 @@
 """Frequency-domain features · FFT 頻域特徵."""
+
 import numpy as np
 from scipy.fft import rfft
 
@@ -7,9 +8,9 @@ from src.isa.config import SAMPLING_RATE
 # 命名順序必須與 extract_freq_features 的提取順序一致：
 # 每個訊號依序產生 domfreq/centroid/band/entropy 四欄（交錯，非逐特徵分組）
 FEATURE_NAMES = [
-    f"{sig}_{feat}" for sig in ["acc_x", "acc_y", "acc_z", "acc_mag"]
-    for feat in ["domfreq_hz", "centroid_hz", "band1_3hz_ratio",
-                 "spectral_entropy"]
+    f"{sig}_{feat}"
+    for sig in ["acc_x", "acc_y", "acc_z", "acc_mag"]
+    for feat in ["domfreq_hz", "centroid_hz", "band1_3hz_ratio", "spectral_entropy"]
 ]
 
 
@@ -27,13 +28,12 @@ def spectral_centroid_hz(x: np.ndarray, fs: int = SAMPLING_RATE) -> float:
     """
     spectrum = np.abs(rfft(x))
     freqs = np.fft.rfftfreq(len(x), d=1 / fs)
-    power = spectrum ** 2
+    power = spectrum**2
     total = power.sum()
     return float((freqs * power).sum() / total) if total > 0 else 0.0
 
 
-def band_energy_ratio(x: np.ndarray, lo: float, hi: float,
-                      fs: int = SAMPLING_RATE) -> float:
+def band_energy_ratio(x: np.ndarray, lo: float, hi: float, fs: int = SAMPLING_RATE) -> float:
     """特定頻帶能量占比（步行步頻約落在 1-3Hz）."""
     spectrum = np.abs(rfft(x)) ** 2
     freqs = np.fft.rfftfreq(len(x), d=1 / fs)
@@ -53,7 +53,7 @@ def spectral_entropy(x: np.ndarray, fs: int = SAMPLING_RATE) -> float:
 def extract_freq_features(windows: np.ndarray) -> np.ndarray:
     """windows: (N, 9, 128) body_acc 三軸＋合成量 → (N, 16)."""
     body = windows[:, 0:3, :]
-    mag = np.sqrt((body ** 2).sum(axis=1))
+    mag = np.sqrt((body**2).sum(axis=1))
     rows = []
     for i in range(len(windows)):
         per = []

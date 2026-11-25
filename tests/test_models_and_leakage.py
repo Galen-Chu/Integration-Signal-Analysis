@@ -1,4 +1,5 @@
 """洩漏防護與模型測試——subject-wise 切分是不可動搖的根基."""
+
 import numpy as np
 from sklearn.model_selection import GroupKFold
 
@@ -14,7 +15,7 @@ def _synthetic_dataset(n_subjects=20, per_subject=10, seed=0):
             label = i % 2
             base = rng.normal(0, 0.1, size=8)
             if label:
-                base[:4] += 2.0    # class 1：前四維明顯偏移
+                base[:4] += 2.0  # class 1：前四維明顯偏移
             X.append(base)
             y.append(label + 1)
             groups.append(s)
@@ -48,6 +49,7 @@ class TestModels:
 
     def test_make_model_unknown(self):
         import pytest
+
         with pytest.raises(ValueError):
             make_model("xgboost")
 
@@ -58,8 +60,9 @@ class TestHoldout:
         # 前 10 人訓練、後 2 人測試（受試者不重疊）
         tr_mask = groups <= 9
         te_mask = groups > 9
-        report = evaluate_holdout(X[tr_mask], y[tr_mask], X[te_mask], y[te_mask],
-                                  groups[tr_mask], kind="rf")
+        report = evaluate_holdout(
+            X[tr_mask], y[tr_mask], X[te_mask], y[te_mask], groups[tr_mask], kind="rf"
+        )
         assert report["split"] == "official-holdout"
         assert report["n_train"] == int(tr_mask.sum())
         assert report["n_test"] == int(te_mask.sum())

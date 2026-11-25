@@ -1,4 +1,5 @@
 """Project configuration · 路徑與常數."""
+
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

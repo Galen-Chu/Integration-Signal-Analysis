@@ -11,6 +11,7 @@
 
 全部向量化（numpy 軸運算＋批量 rfft），無逐視窗迴圈.
 """
+
 import numpy as np
 from scipy.fft import rfft
 
@@ -25,28 +26,27 @@ FEATURE_NAMES_ECDF = [
     for q in ECDF_QUANTILES
 ]
 FEATURE_NAMES_BANDS = [
-    f"total_{axis}_band{lo:g}_{hi:g}hz_ratio"
-    for axis in "xyz"
-    for lo, hi in BANDS_HZ
+    f"total_{axis}_band{lo:g}_{hi:g}hz_ratio" for axis in "xyz" for lo, hi in BANDS_HZ
 ]
 
 
 def extract_ecdf_features(windows: np.ndarray) -> np.ndarray:
     """windows: (N, 9, 128) → (N, 30)：六訊號 × 5 百分位（ECDF 反函數值）."""
     sigs = np.concatenate([windows[:, 0:3, :], windows[:, 6:9, :]], axis=1)  # (N,6,128)
-    feats = np.percentile(sigs, ECDF_QUANTILES, axis=-1)     # (Q, N, 6)
-    out = feats.transpose(1, 2, 0)                           # (N, 6, Q)
+    feats = np.percentile(sigs, ECDF_QUANTILES, axis=-1)  # (Q, N, 6)
+    out = feats.transpose(1, 2, 0)  # (N, 6, Q)
     return out.reshape(len(windows), -1).astype(np.float32)
 
 
 def extract_band_features(windows: np.ndarray) -> np.ndarray:
     """windows: (N, 9, 128) → (N, 9)：total 三軸 × 三頻帶能量占比."""
-    total = windows[:, 6:9, :]                                # (N,3,128)
-    spectrum = np.abs(rfft(total, axis=-1)) ** 2              # (N,3,65)
+    total = windows[:, 6:9, :]  # (N,3,128)
+    spectrum = np.abs(rfft(total, axis=-1)) ** 2  # (N,3,65)
     freqs = np.fft.rfftfreq(total.shape[-1], d=1 / SAMPLING_RATE)
     total_energy = spectrum.sum(axis=-1, keepdims=True)
     total_energy = np.where(total_energy > 0, total_energy, 1.0)
     cols = [((freqs >= lo) & (freqs < hi)).nonzero()[0] for lo, hi in BANDS_HZ]
-    ratios = np.stack([spectrum[:, :, c].sum(axis=-1) / total_energy.squeeze(-1)
-                       for c in cols], axis=-1)               # (N,3,B)
+    ratios = np.stack(
+        [spectrum[:, :, c].sum(axis=-1) / total_energy.squeeze(-1) for c in cols], axis=-1
+    )  # (N,3,B)
     return ratios.reshape(len(windows), -1).astype(np.float32)  # (N, 9)

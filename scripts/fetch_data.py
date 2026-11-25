@@ -1,9 +1,10 @@
 """fetch_data · 下載資料集.
 
-    python scripts/fetch_data.py --all          # UCI + Fitbit
-    python scripts/fetch_data.py --uci          # 只下載 UCI HAR
-    python scripts/fetch_data.py --fitbit       # 只下載 Fitbit（kagglehub）
+python scripts/fetch_data.py --all          # UCI + Fitbit
+python scripts/fetch_data.py --uci          # 只下載 UCI HAR
+python scripts/fetch_data.py --fitbit       # 只下載 Fitbit（kagglehub）
 """
+
 import argparse
 import sys
 from pathlib import Path

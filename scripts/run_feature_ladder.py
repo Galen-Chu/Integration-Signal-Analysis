@@ -6,6 +6,7 @@
 分佈形狀資訊。逐家族補上 ECDF 百分位、頻帶能量，每階官方 split 重評——
 每族買到幾 pp、維度代價多少，數字說話；無貢獻的家族即捨棄.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -41,10 +42,20 @@ def main():
     y, y_te = load_labels(UCI_DIR, "train"), load_labels(UCI_DIR, "test")
     groups = load_subjects(UCI_DIR, "train")
 
-    base_tr = np.hstack([extract_time_features(win_tr), extract_freq_features(win_tr),
-                         extract_posture_features(win_tr)])
-    base_te = np.hstack([extract_time_features(win_te), extract_freq_features(win_te),
-                         extract_posture_features(win_te)])
+    base_tr = np.hstack(
+        [
+            extract_time_features(win_tr),
+            extract_freq_features(win_tr),
+            extract_posture_features(win_tr),
+        ]
+    )
+    base_te = np.hstack(
+        [
+            extract_time_features(win_te),
+            extract_freq_features(win_te),
+            extract_posture_features(win_te),
+        ]
+    )
     ecdf_tr, ecdf_te = extract_ecdf_features(win_tr), extract_ecdf_features(win_te)
     band_tr, band_te = extract_band_features(win_tr), extract_band_features(win_te)
     uci_tr, uci_te = load_uci_features(UCI_DIR, "train"), load_uci_features(UCI_DIR, "test")
@@ -57,25 +68,35 @@ def main():
         return np.hstack([extract_time_features(jerk), extract_freq_features(jerk)])
 
     jerk_tr, jerk_te = jerk_feats(win_tr), jerk_feats(win_te)
-    print(f"base(ours2): {base_tr.shape[1]}d  +ecdf: {ecdf_tr.shape[1]}d  "
-          f"+bands: {band_tr.shape[1]}d  +jerk: {jerk_tr.shape[1]}d  "
-          f"(uci anchor: {uci_tr.shape[1]}d)")
+    print(
+        f"base(ours2): {base_tr.shape[1]}d  +ecdf: {ecdf_tr.shape[1]}d  "
+        f"+bands: {band_tr.shape[1]}d  +jerk: {jerk_tr.shape[1]}d  "
+        f"(uci anchor: {uci_tr.shape[1]}d)"
+    )
 
     steps = [
         ("ours2 (baseline)", base_tr, base_te),
         ("ours2+ecdf", np.hstack([base_tr, ecdf_tr]), np.hstack([base_te, ecdf_te])),
         ("ours2+bands", np.hstack([base_tr, band_tr]), np.hstack([base_te, band_te])),
-        ("ours2+ecdf+bands", np.hstack([base_tr, ecdf_tr, band_tr]),
-         np.hstack([base_te, ecdf_te, band_te])),
+        (
+            "ours2+ecdf+bands",
+            np.hstack([base_tr, ecdf_tr, band_tr]),
+            np.hstack([base_te, ecdf_te, band_te]),
+        ),
         ("ours2+jerk", np.hstack([base_tr, jerk_tr]), np.hstack([base_te, jerk_te])),
-        ("ours2+jerk+bands", np.hstack([base_tr, jerk_tr, band_tr]),
-         np.hstack([base_te, jerk_te, band_te])),
+        (
+            "ours2+jerk+bands",
+            np.hstack([base_tr, jerk_tr, band_tr]),
+            np.hstack([base_te, jerk_te, band_te]),
+        ),
         ("uci-561 (anchor)", uci_tr, uci_te),
     ]
     models = ["svm", "rf", "xgb"]
     results = {}
-    print(f"\n{'step':<20} {'dims':>5} | " + " | ".join(
-        f"{m.upper()} acc / SIT-recall" for m in models))
+    print(
+        f"\n{'step':<20} {'dims':>5} | "
+        + " | ".join(f"{m.upper()} acc / SIT-recall" for m in models)
+    )
     print("-" * 78)
     for name, X, X_te in steps:
         results[name] = {"dims": int(X.shape[1])}
@@ -83,8 +104,11 @@ def main():
         for m in models:
             r = evaluate_holdout(X, y, X_te, y_te, groups, kind=m)
             sit = per_class_recall(r["confusion_matrix"], r["labels"], SIT)
-            results[name][m] = {"accuracy": r["accuracy"], "macro_f1": r["macro_f1"],
-                                "sit_recall": sit}
+            results[name][m] = {
+                "accuracy": r["accuracy"],
+                "macro_f1": r["macro_f1"],
+                "sit_recall": sit,
+            }
             cells.append(f"{r['accuracy']:.4f} / {sit:.3f}")
         print(f"{name:<20} {X.shape[1]:>5} | " + " | ".join(cells))
 

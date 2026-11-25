@@ -1,4 +1,5 @@
 """UCI loader 測試——tmp_path 迷你 fixture，免下載真實資料."""
+
 import numpy as np
 import pytest
 
@@ -15,9 +16,9 @@ def mini_uci(tmp_path):
         for sig in SIGNALS:
             data = np.arange(n * 128, dtype=float).reshape(n, 128) / 1000
             np.savetxt(signals_dir / f"{sig}_{split}.txt", data, fmt="%.6f")
-        labels = np.arange(1, n + 1).reshape(n, 1)      # 1..n，皆為合法活動碼
+        labels = np.arange(1, n + 1).reshape(n, 1)  # 1..n，皆為合法活動碼
         np.savetxt(root / split / f"y_{split}.txt", labels, fmt="%d")
-        subjects = (np.arange(n) + 1).reshape(n, 1)     # 受試者 1..n
+        subjects = (np.arange(n) + 1).reshape(n, 1)  # 受試者 1..n
         np.savetxt(root / split / f"subject_{split}.txt", subjects, fmt="%d")
     return root
 
@@ -46,7 +47,6 @@ def test_subjects(mini_uci):
 
 
 def test_labels_reject_unknown_code(mini_uci):
-    np.savetxt(mini_uci / "train" / "y_train.txt",
-               np.array([[7]]), fmt="%d")
+    np.savetxt(mini_uci / "train" / "y_train.txt", np.array([[7]]), fmt="%d")
     with pytest.raises(AssertionError):
         load_labels(mini_uci, "train")

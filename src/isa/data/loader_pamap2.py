@@ -5,28 +5,37 @@ col 1=timestamp(s) · col 2=activityID · col 3=heart rate(bpm) ·
 col 4-19 手部 IMU（col4 溫度、col5-7 ±16g 加速度計 xyz；±6g 在 col8-10，未用）
 官方缺值以 NaN 表示；activityID=0 為 transient（不分析）.
 """
+
 import numpy as np
 import pandas as pd
 
 PAMAP2_ACTIVITIES = {
-    1: "lying", 2: "sitting", 3: "standing", 4: "walking",
-    5: "running", 6: "cycling", 7: "nordic_walking",
-    12: "ascending_stairs", 13: "descending_stairs",
-    16: "vacuum_cleaning", 17: "ironing", 24: "rope_jumping",
+    1: "lying",
+    2: "sitting",
+    3: "standing",
+    4: "walking",
+    5: "running",
+    6: "cycling",
+    7: "nordic_walking",
+    12: "ascending_stairs",
+    13: "descending_stairs",
+    16: "vacuum_cleaning",
+    17: "ironing",
+    24: "rope_jumping",
 }
 TRANSIENT = 0
 
 # 載入欄位（pandas 0-based）：timestamp, activity, hr, 手部溫度, 手部 acc xyz
 # PAMAP2 官方文件為 1-based，此處已換算
 USECOLS = [0, 1, 2, 3, 4, 5, 6]
-COL_NAMES = ["timestamp", "activity", "hr", "hand_temp",
-             "acc_x", "acc_y", "acc_z"]
+COL_NAMES = ["timestamp", "activity", "hr", "hand_temp", "acc_x", "acc_y", "acc_z"]
 
 
 def load_subject(path, resample_sec: float = 1.0) -> pd.DataFrame:
     """單一受試者 → 逐秒重採樣 DataFrame（HR 缺值前向填充）."""
-    df = pd.read_csv(path, sep=r"\s+", header=None, usecols=USECOLS,
-                     names=COL_NAMES, na_values="NaN")
+    df = pd.read_csv(
+        path, sep=r"\s+", header=None, usecols=USECOLS, names=COL_NAMES, na_values="NaN"
+    )
     df = df[df["activity"] != TRANSIENT]
     if df.empty:
         return df
@@ -39,7 +48,7 @@ def load_subject(path, resample_sec: float = 1.0) -> pd.DataFrame:
     # 加速度合成量：逐秒平均（先對原始列算 mag 再 groupby 平均，順序才正確）
     df["acc_mag_inst"] = np.sqrt(df["acc_x"] ** 2 + df["acc_y"] ** 2 + df["acc_z"] ** 2)
     agg["acc_mag"] = df.groupby("t")["acc_mag_inst"].mean()
-    agg["hr"] = agg["hr"].ffill()          # HR 官方建議前向填充
+    agg["hr"] = agg["hr"].ffill()  # HR 官方建議前向填充
     agg = agg[agg["hr"].notna()]
     agg["activity"] = agg["activity"].astype(int)
     return agg.reset_index()
@@ -50,18 +59,16 @@ def load_all_protocol(data_dir) -> pd.DataFrame:
     frames = []
     for path in sorted(data_dir.glob("subject10*.dat")):
         subject_id = int(path.stem.replace("subject", ""))
-        if subject_id > 109:      # optional sessions (subjectxx1.dat) 先不用
+        if subject_id > 109:  # optional sessions (subjectxx1.dat) 先不用
             continue
         df = load_subject(path)
         if df.empty:
             continue
         df["subject"] = subject_id
         frames.append(df)
-        print(f"  {path.name}: {len(df)} seconds, "
-              f"{df['activity'].nunique()} activities")
+        print(f"  {path.name}: {len(df)} seconds, {df['activity'].nunique()} activities")
     if not frames:
-        raise FileNotFoundError(
-            f"no subject10*.dat under {data_dir} — run fetch_data first")
+        raise FileNotFoundError(f"no subject10*.dat under {data_dir} — run fetch_data first")
     return pd.concat(frames, ignore_index=True)
 
 
@@ -70,9 +77,9 @@ def load_all_protocol(data_dir) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 FS_PAMAP2 = 100
-WINDOW = 128        # 2.56s @50Hz（與 UCI 相同時間解析度）
+WINDOW = 128  # 2.56s @50Hz（與 UCI 相同時間解析度）
 STRIDE = 64
-GRAVITY_WIN = 50    # 0.5s @100Hz 低通估重力
+GRAVITY_WIN = 50  # 0.5s @100Hz 低通估重力
 
 # 三個 IMU 位置的加速度計欄（0-based）。每位置有兩顆加速度計：
 # ±16g（官方 1-based col5-7/21-23/37-39 → 0-based 4-6/20-22/36-38）與
@@ -92,9 +99,9 @@ def _decimate2(arr: np.ndarray) -> np.ndarray:
     return arr[:n].reshape(n // 2, 2, -1).mean(axis=1)
 
 
-def load_pamap2_windows(data_dir, window: int = WINDOW,
-                        stride: int = STRIDE,
-                        position: str = "hand", scale: str = "16g") -> tuple:
+def load_pamap2_windows(
+    data_dir, window: int = WINDOW, stride: int = STRIDE, position: str = "hand", scale: str = "16g"
+) -> tuple:
     """PAMAP2 Protocol → UCI 相容視窗 (N, 9, 128)＋labels＋subject ids.
 
     position：IMU 位置（hand/chest/ankle）；scale：加速度計顆粒（16g/6g）
@@ -104,22 +111,27 @@ def load_pamap2_windows(data_dir, window: int = WINDOW,
     逐受試者逐連續活動區塊切窗；activity 0（transient）與含 NaN 的列丟棄.
     """
     import pandas as pd
+
     if scale not in POSITION_ACC_COLS:
-        raise ValueError(f"unknown scale: {scale!r} "
-                         f"(choose from {sorted(POSITION_ACC_COLS)})")
+        raise ValueError(f"unknown scale: {scale!r} (choose from {sorted(POSITION_ACC_COLS)})")
     if position not in POSITION_ACC_COLS[scale]:
-        raise ValueError(f"unknown position: {position!r} "
-                         f"(choose from {sorted(POSITION_ACC_COLS[scale])})")
+        raise ValueError(
+            f"unknown position: {position!r} (choose from {sorted(POSITION_ACC_COLS[scale])})"
+        )
     acc_cols = POSITION_ACC_COLS[scale][position]
     all_w, all_y, all_g = [], [], []
     for path in sorted(data_dir.glob("subject10*.dat")):
         sid = int(path.stem.replace("subject", ""))
         if sid > 109:
             continue
-        df = pd.read_csv(path, sep=r"\s+", header=None,
-                         usecols=[1, *acc_cols],
-                         names=["activity", "acc_x", "acc_y", "acc_z"],
-                         na_values="NaN").dropna()
+        df = pd.read_csv(
+            path,
+            sep=r"\s+",
+            header=None,
+            usecols=[1, *acc_cols],
+            names=["activity", "acc_x", "acc_y", "acc_z"],
+            na_values="NaN",
+        ).dropna()
         df = df[df["activity"] != TRANSIENT]
         if df.empty:
             continue
@@ -127,17 +139,19 @@ def load_pamap2_windows(data_dir, window: int = WINDOW,
         acts = df["activity"].to_numpy()
         # 連續活動區塊
         change = np.flatnonzero(np.diff(acts) != 0) + 1
-        for start, end in zip(np.r_[0, change], np.r_[change, len(acts)],
-                              strict=True):
+        for start, end in zip(np.r_[0, change], np.r_[change, len(acts)], strict=True):
             if acts[start] not in PAMAP2_ACTIVITIES:
                 continue
             block = acc[start:end]
-            if len(block) < FS_PAMAP2 * 3:   # <3 秒的區塊不可靠，略過
+            if len(block) < FS_PAMAP2 * 3:  # <3 秒的區塊不可靠，略過
                 continue
             # 重力分離（低通）→ body；total＝body＋重力（UCI 布局）
-            gravity = (pd.DataFrame(block)
-                       .rolling(GRAVITY_WIN, center=True, min_periods=1)
-                       .mean().to_numpy())
+            gravity = (
+                pd.DataFrame(block)
+                .rolling(GRAVITY_WIN, center=True, min_periods=1)
+                .mean()
+                .to_numpy()
+            )
             body = block - gravity
             total = body + gravity
             # 100→50Hz、切窗（body/total 各自同步）
@@ -145,8 +159,8 @@ def load_pamap2_windows(data_dir, window: int = WINDOW,
             t50 = _decimate2(total)
             for s in range(0, len(b50) - window + 1, stride):
                 w = np.zeros((9, window), dtype=np.float32)
-                w[0:3, :] = b50[s:s + window].T
-                w[6:9, :] = t50[s:s + window].T
+                w[0:3, :] = b50[s : s + window].T
+                w[6:9, :] = t50[s : s + window].T
                 all_w.append(w)
                 all_y.append(int(acts[start]))
                 all_g.append(sid)

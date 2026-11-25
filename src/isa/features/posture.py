@@ -7,11 +7,16 @@
 
 windows 軸順序同 loader.SIGNALS：0-2 body_acc、6-8 total_acc.
 """
+
 import numpy as np
 
 FEATURE_NAMES = [
-    "gravity_x", "gravity_y", "gravity_z",
-    "angle_x_gravity_deg", "angle_y_gravity_deg", "angle_z_gravity_deg",
+    "gravity_x",
+    "gravity_y",
+    "gravity_z",
+    "angle_x_gravity_deg",
+    "angle_y_gravity_deg",
+    "angle_z_gravity_deg",
 ]
 
 
@@ -28,8 +33,7 @@ def axis_gravity_angles(g: np.ndarray) -> list:
     norm = float(np.linalg.norm(g))
     if norm < 1e-9:
         return [90.0, 90.0, 90.0]
-    return [float(np.degrees(np.arccos(np.clip(c / norm, -1.0, 1.0))))
-            for c in g]
+    return [float(np.degrees(np.arccos(np.clip(c / norm, -1.0, 1.0)))) for c in g]
 
 
 def extract_posture_features(windows: np.ndarray) -> np.ndarray:

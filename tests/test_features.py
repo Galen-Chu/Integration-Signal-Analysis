@@ -1,4 +1,5 @@
 """特徵工程測試——合成訊號、精確數值基準."""
+
 import numpy as np
 
 from src.isa.features.freq_domain import (
@@ -26,7 +27,7 @@ class TestFreqDomain:
         assert abs(dominant_frequency_hz(_sine(1.0), FS) - 1.0) < 0.5
 
     def test_dominant_frequency_ignores_dc(self):
-        x = _sine(2.0) + 100.0   # 大 DC 偏移不可干擾主頻
+        x = _sine(2.0) + 100.0  # 大 DC 偏移不可干擾主頻
         assert abs(dominant_frequency_hz(x, FS) - 2.0) < 0.5
 
     def test_band_energy_ratio(self):
@@ -56,10 +57,11 @@ class TestFreqDomain:
         # 回歸測試：FEATURE_NAMES 曾與提取順序錯位（名字逐特徵分組、提取逐訊號
         # 交錯）——名字一對欄位即 silently 拿錯。三支不同頻率的正弦釘住對應.
         from src.isa.features.freq_domain import FEATURE_NAMES
+
         w = np.zeros((1, 9, 128), dtype=np.float32)
-        w[0, 0, :] = _sine(1.0)     # body x：1Hz
-        w[0, 1, :] = _sine(5.0)     # body y：5Hz
-        w[0, 2, :] = _sine(9.0)     # body z：9Hz
+        w[0, 0, :] = _sine(1.0)  # body x：1Hz
+        w[0, 1, :] = _sine(5.0)  # body y：5Hz
+        w[0, 2, :] = _sine(9.0)  # body z：9Hz
         feats = extract_freq_features(w)[0]
         names = dict(zip(FEATURE_NAMES, feats.tolist(), strict=True))
         assert abs(names["acc_x_domfreq_hz"] - 1.0) < 0.5
@@ -72,7 +74,7 @@ class TestFreqDomain:
         # 凍結/全零訊號（PAMAP2 ±16g 故障通道情境）不可產生 NaN：
         # 常數軸相關與全零頻譜質心的 0/0 定義為 0
         w = np.zeros((2, 9, 128), dtype=np.float32)
-        w[:, 8, :] = 9.81           # total z 有重力，其餘全零
+        w[:, 8, :] = 9.81  # total z 有重力，其餘全零
         feats = np.hstack([extract_time_features(w), extract_freq_features(w)])
         assert np.isfinite(feats).all()
 
@@ -87,6 +89,7 @@ class TestTimeDomain:
 
     def test_extract_time_features_shape_and_names(self):
         from src.isa.features.time_domain import FEATURE_NAMES
+
         rng = np.random.default_rng(2)
         windows = rng.normal(size=(4, 9, 128)).astype(np.float32)
         feats = extract_time_features(windows)
@@ -96,7 +99,7 @@ class TestTimeDomain:
 
     def test_mean_feature_matches_manual(self):
         windows = np.zeros((1, 9, 128), dtype=np.float32)
-        windows[0, 0, :] = 2.0   # body_acc_x 全 2.0
+        windows[0, 0, :] = 2.0  # body_acc_x 全 2.0
         feats = extract_time_features(windows)
         # FEATURE_NAMES[0] = acc_x_mean
         assert feats[0, 0] == 2.0

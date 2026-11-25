@@ -1,4 +1,5 @@
 """姿態幾何特徵測試——已知重力的合成視窗、精確角度."""
+
 import numpy as np
 import pytest
 
@@ -10,8 +11,8 @@ def _window(gravity, body_noise=0.0, n=128, seed=0):
     rng = np.random.default_rng(seed)
     w = np.zeros((9, n))
     g = np.asarray(gravity, dtype=float)
-    w[0:3, :] = body_noise * rng.normal(size=(3, n))   # body_acc
-    w[6:9, :] = w[0:3, :] + g[:, None]                 # total_acc = body + g
+    w[0:3, :] = body_noise * rng.normal(size=(3, n))  # body_acc
+    w[6:9, :] = w[0:3, :] + g[:, None]  # total_acc = body + g
     return w
 
 

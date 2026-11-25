@@ -1,4 +1,5 @@
 """Distribution features tests · ECDF 百分位與頻帶能量占比."""
+
 import numpy as np
 
 from src.isa.features.distribution import (
@@ -29,8 +30,8 @@ class TestEcdf:
         w = _windows(np.stack([x, x * 0, x * 0]), np.stack([x, x * 0, x * 0]))
         out = extract_ecdf_features(w)[0]
         qs = np.percentile(x, ECDF_QUANTILES)
-        np.testing.assert_allclose(out[:5], qs, rtol=1e-6)   # body_x 五百分位
-        assert out[5] == np.float32(0.0)                     # body_y（全零訊號）
+        np.testing.assert_allclose(out[:5], qs, rtol=1e-6)  # body_x 五百分位
+        assert out[5] == np.float32(0.0)  # body_y（全零訊號）
         np.testing.assert_allclose(out[15:20], qs, rtol=1e-6)  # total_x
         idx_total_x_p50 = 3 * len(ECDF_QUANTILES) + 2
         assert out[idx_total_x_p50] == np.float32(qs[2])
@@ -65,9 +66,9 @@ class TestBands:
         sig = np.sin(2 * np.pi * 1.5 * t)
         w = _windows(np.zeros((3, 128)), np.stack([sig, sig * 0, sig * 0]))
         out = extract_band_features(w)[0]
-        assert out[1] > 0.95          # total_x 1-3Hz
-        assert out[0] < 0.05          # 0.3-1Hz
-        assert out[2] < 0.05          # 3-6Hz
+        assert out[1] > 0.95  # total_x 1-3Hz
+        assert out[0] < 0.05  # 0.3-1Hz
+        assert out[2] < 0.05  # 3-6Hz
 
     def test_ratios_sum_leq_one(self):
         w = np.random.default_rng(1).normal(size=(5, 9, 128)) + 0.2

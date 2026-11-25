@@ -4,6 +4,7 @@
 問題：UCI 的 SITTING↔STANDING 混淆（與「特徵假說」）會在第二個資料集重現嗎？
 12 活動（含家務）、9 受試者、與 UCI 相同的 49 維特徵與 GroupKFold 協議.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -28,14 +29,19 @@ def main():
 
     print("Building UCI-compatible windows from PAMAP2 Protocol…")
     windows, y, groups = load_pamap2_windows(data_dir)
-    counts = {PAMAP2_ACTIVITIES[k]: int(v)
-              for k, v in zip(*np.unique(y, return_counts=True), strict=True)}
+    counts = {
+        PAMAP2_ACTIVITIES[k]: int(v) for k, v in zip(*np.unique(y, return_counts=True), strict=True)
+    }
     print(f"windows: {windows.shape}, subjects: {sorted(np.unique(groups).tolist())}")
     print("windows/activity:", counts)
 
-    X = np.hstack([extract_time_features(windows),
-                   extract_freq_features(windows),
-                   extract_posture_features(windows)])
+    X = np.hstack(
+        [
+            extract_time_features(windows),
+            extract_freq_features(windows),
+            extract_posture_features(windows),
+        ]
+    )
     print(f"features: {X.shape[1]}-dim (ours2)")
 
     reports = {}
@@ -43,8 +49,10 @@ def main():
         print(f"\n=== {kind.upper()} · PAMAP2 subject-wise 5-fold CV ===")
         report = subject_cv_evaluate(X, y, groups, kind=kind)
         reports[kind] = report
-        print(f"mean acc = {report['mean_accuracy']:.4f} "
-              f"(±{report['std_accuracy']:.4f}), macro-F1 = {report['macro_f1']:.4f}")
+        print(
+            f"mean acc = {report['mean_accuracy']:.4f} "
+            f"(±{report['std_accuracy']:.4f}), macro-F1 = {report['macro_f1']:.4f}"
+        )
 
     # 靜態對（sitting/standing/lying）召回——複現檢驗的核心
     labels = reports["rf"]["labels"]
@@ -56,12 +64,10 @@ def main():
         for i, name in enumerate(names):
             if name in ("lying", "sitting", "standing"):
                 print(f"  {name:10s} recall={recall[i]:.2f}")
-        plot_confusion(cm, labels, names,
-                       FIGURES_DIR / f"confusion_{kind}_pamap2_ours2.png")
+        plot_confusion(cm, labels, names, FIGURES_DIR / f"confusion_{kind}_pamap2_ours2.png")
 
     out = PROCESSED_DIR / "report_pamap2_ours2.json"
-    out.write_text(json.dumps(reports, indent=2, ensure_ascii=False),
-                   encoding="utf-8")
+    out.write_text(json.dumps(reports, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nreport → {out}")
 
 

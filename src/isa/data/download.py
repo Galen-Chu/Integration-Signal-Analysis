@@ -1,16 +1,17 @@
 """Dataset download · UCI HAR 直接下載；Fitbit 走 kagglehub（公開集免帳號）."""
+
 import io
 import sys
 import urllib.request
 import zipfile
 from pathlib import Path
 
-UCI_URL = ("https://archive.ics.uci.edu/static/public/240/"
-           "human+activity+recognition+using+smartphones.zip")
+UCI_URL = (
+    "https://archive.ics.uci.edu/static/public/240/human+activity+recognition+using+smartphones.zip"
+)
 
 # PAMAP2：心率＋三 IMU 同步量測（9 人×18 活動×100Hz）——整合分析主力
-PAMAP2_URL = ("https://archive.ics.uci.edu/static/public/231/"
-              "pamap2+physical+activity+monitoring.zip")
+PAMAP2_URL = "https://archive.ics.uci.edu/static/public/231/pamap2+physical+activity+monitoring.zip"
 
 # Kaggle: FitBit Fitness Tracker Data（33 位 Fitbit 使用者 03-04.2016 分鐘級資料）
 FITBIT_DATASET = "mobius/fitbit-fitness-tracker-data"
@@ -35,8 +36,7 @@ def download_uci(raw_dir: Path) -> Path:
     print(f"Downloading UCI HAR from {UCI_URL} …")
     data = urllib.request.urlopen(UCI_URL, timeout=120).read()
     with zipfile.ZipFile(io.BytesIO(data)) as outer:
-        inner_name = next((n for n in outer.namelist()
-                           if n.endswith("UCI HAR Dataset.zip")), None)
+        inner_name = next((n for n in outer.namelist() if n.endswith("UCI HAR Dataset.zip")), None)
         if inner_name is None:
             # 有些版本外層就是資料夾
             outer.extractall(raw_dir)
@@ -55,7 +55,7 @@ def download_fitbit(raw_dir: Path) -> Path:
         import kagglehub
     except ImportError:
         print("請先 pip install kagglehub，或見 README 手動下載指引。")
-        raise SystemExit(2) from None     # 已給使用者友善訊息，不必鏈結堆疊
+        raise SystemExit(2) from None  # 已給使用者友善訊息，不必鏈結堆疊
 
     print(f"Fetching {FITBIT_DATASET} via kagglehub …")
     path = Path(kagglehub.dataset_download(FITBIT_DATASET))
@@ -77,8 +77,7 @@ def download_all(raw_dir: Path, include_fitbit: bool = True):
         except SystemExit:
             raise
         except Exception as e:  # kagglehub 失敗不阻斷 UCI 管線
-            print(f"⚠ Fitbit 下載失敗（{e}）——UCI 管線不受影響；"
-                  "手動下載說明見 README。")
+            print(f"⚠ Fitbit 下載失敗（{e}）——UCI 管線不受影響；手動下載說明見 README。")
     return True
 
 
@@ -95,7 +94,7 @@ def download_pamap2(raw_dir: Path) -> Path:
         print(f"Downloading PAMAP2 from {PAMAP2_URL} …")
         data = urllib.request.urlopen(PAMAP2_URL, timeout=900).read()
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
-            zf.extractall(raw_dir)          # UCI 外層：內含 PAMAP2_Dataset.zip＋readme
+            zf.extractall(raw_dir)  # UCI 外層：內含 PAMAP2_Dataset.zip＋readme
     # 解內層 zip（subject*.dat 在這層）
     with zipfile.ZipFile(inner_zip) as inner:
         inner.extractall(raw_dir)

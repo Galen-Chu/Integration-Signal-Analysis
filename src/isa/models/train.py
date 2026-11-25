@@ -3,6 +3,7 @@
 隨機切分會讓同一受試者的視窗同時落在訓練與測試——accuracy 虛高。
 本專案一律 GroupKFold（groups=受試者編號），這是結果可信的根基.
 """
+
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
@@ -32,47 +33,63 @@ class _ZeroBasedWrapper(BaseEstimator, ClassifierMixin):
 
 def make_model(kind: str = "rf", random_state: int = 42):
     if kind == "rf":
-        return RandomForestClassifier(
-            n_estimators=300, n_jobs=-1, random_state=random_state)
+        return RandomForestClassifier(n_estimators=300, n_jobs=-1, random_state=random_state)
     if kind == "svm":
-        return Pipeline([
-            ("scale", StandardScaler()),
-            ("svm", SVC(kernel="rbf", C=10, random_state=random_state)),
-        ])
+        return Pipeline(
+            [
+                ("scale", StandardScaler()),
+                ("svm", SVC(kernel="rbf", C=10, random_state=random_state)),
+            ]
+        )
     if kind == "xgb":
         from xgboost import XGBClassifier  # 延遲匯入：無 xgboost 環境仍可用其餘模型
 
-        return _ZeroBasedWrapper(Pipeline([
-            ("scale", StandardScaler()),
-            ("xgb", XGBClassifier(
-                n_estimators=400, max_depth=6, learning_rate=0.2,
-                subsample=0.9, colsample_bytree=0.9,
-                eval_metric="mlogloss", random_state=random_state,
-                n_jobs=-1)),
-        ]))
+        return _ZeroBasedWrapper(
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    (
+                        "xgb",
+                        XGBClassifier(
+                            n_estimators=400,
+                            max_depth=6,
+                            learning_rate=0.2,
+                            subsample=0.9,
+                            colsample_bytree=0.9,
+                            eval_metric="mlogloss",
+                            random_state=random_state,
+                            n_jobs=-1,
+                        ),
+                    ),
+                ]
+            )
+        )
     raise ValueError(f"unknown model kind: {kind}")
 
 
-def subject_cv_evaluate(X, y, groups, kind: str = "rf", n_splits: int = 5,
-                        random_state: int = 42) -> dict:
+def subject_cv_evaluate(
+    X, y, groups, kind: str = "rf", n_splits: int = 5, random_state: int = 42
+) -> dict:
     """GroupKFold 逐折訓練/評估；回傳彙整報告（含混淆矩陣總和）."""
     labels = np.unique(y)
     gkf = GroupKFold(n_splits=n_splits)
     accs, all_true, all_pred = [], [], []
 
     for fold, (tr, te) in enumerate(gkf.split(X, y, groups), 1):
-        assert set(groups[tr]).isdisjoint(set(groups[te])), \
-            f"fold {fold}: subject leakage!"
+        assert set(groups[tr]).isdisjoint(set(groups[te])), f"fold {fold}: subject leakage!"
         model = make_model(kind, random_state)
         model.fit(X[tr], y[tr])
         pred = model.predict(X[te])
         accs.append(float((pred == y[te]).mean()))
         all_true.extend(y[te].tolist())
         all_pred.extend(pred.tolist())
-        print(f"  fold {fold}/{n_splits} accuracy = {accs[-1]:.4f} "
-              f"(test subjects: {sorted(set(groups[te].tolist()))})")
+        print(
+            f"  fold {fold}/{n_splits} accuracy = {accs[-1]:.4f} "
+            f"(test subjects: {sorted(set(groups[te].tolist()))})"
+        )
 
     from sklearn.metrics import confusion_matrix, f1_score
+
     cm = confusion_matrix(all_true, all_pred, labels=labels)
     return {
         "model": kind,
@@ -88,8 +105,9 @@ def subject_cv_evaluate(X, y, groups, kind: str = "rf", n_splits: int = 5,
     }
 
 
-def evaluate_holdout(X_train, y_train, X_test, y_test, groups_train,
-                     kind: str = "rf", random_state: int = 42) -> dict:
+def evaluate_holdout(
+    X_train, y_train, X_test, y_test, groups_train, kind: str = "rf", random_state: int = 42
+) -> dict:
     """官方 held-out 評估：訓練集全量擬合、測試集一次評估.
 
     UCI HAR 的官方 train/test 本身就是受試者不重疊（21/9 人）——

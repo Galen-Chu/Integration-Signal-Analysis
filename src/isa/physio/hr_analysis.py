@@ -3,6 +3,7 @@
 實機/臨床版可換 RR-interval 做 HRV；Fitbit 秒級心率資料先做
 zone 分布與恢復率（HRR）——動作「負荷」的量化基礎.
 """
+
 import numpy as np
 import pandas as pd
 
@@ -20,8 +21,7 @@ def hr_zone_percentages(hr_series: pd.Series, max_hr: int = DEFAULT_MAX_HR) -> d
     return result
 
 
-def hr_recovery(hr: pd.Series, times: pd.Series,
-                anchor: pd.Timestamp, minutes: float = 1.0):
+def hr_recovery(hr: pd.Series, times: pd.Series, anchor: pd.Timestamp, minutes: float = 1.0):
     """心率恢復（HRR）：anchor 當下峰值 − 之後 N 分鐘的最低心率.
 
     HRR < 12 bpm/1min 是疲勞/心血管風險的經典門檻.
@@ -39,8 +39,8 @@ def daily_load_summary(minute_hr: pd.Series) -> dict:
     """每日負荷：分鐘級心率的時數×強度加權（簡化 TRIMP）."""
     pct = minute_hr / DEFAULT_MAX_HR * 100
     weights = np.select(
-        [pct < 50, pct < 60, pct < 70, pct < 85],
-        [0, 1, 2, 4], default=8)          # 越高強度權重越高
+        [pct < 50, pct < 60, pct < 70, pct < 85], [0, 1, 2, 4], default=8
+    )  # 越高強度權重越高
     return {
         "weighted_load_minutes": float(weights.sum()),
         "moderate_plus_minutes": float((pct >= 60).sum()),
@@ -61,5 +61,6 @@ def load_fitbit_heartrate(fitbit_dir, file_glob: str = "heartrate_seconds*") -> 
         frames.append(df[["Id", "Time", "Value"]])
     if not frames:
         raise FileNotFoundError(
-            f"no '{file_glob}.csv' under {fitbit_dir} — run scripts/fetch_data.py")
+            f"no '{file_glob}.csv' under {fitbit_dir} — run scripts/fetch_data.py"
+        )
     return pd.concat(frames, ignore_index=True).rename(columns={"Value": "hr"})

@@ -22,6 +22,8 @@ jobs:
       run: pip install ruff
     - name: Ruff check
       run: ruff check .
+    - name: Ruff format check
+      run: ruff format --check .
 
   tests:
     name: Tests (pytest, synthetic data)

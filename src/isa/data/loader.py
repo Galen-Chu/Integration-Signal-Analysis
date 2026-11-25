@@ -3,14 +3,21 @@
 所有函式走「資料夾路徑」參數——測試可以用 tmp_path 造的迷你 fixture，
 正式資料由 config.uci_root() 提供。
 """
+
 import numpy as np
 
 from src.isa.config import ACTIVITY_LABELS
 
 SIGNALS = [
-    "body_acc_x", "body_acc_y", "body_acc_z",
-    "body_gyro_x", "body_gyro_y", "body_gyro_z",
-    "total_acc_x", "total_acc_y", "total_acc_z",
+    "body_acc_x",
+    "body_acc_y",
+    "body_acc_z",
+    "body_gyro_x",
+    "body_gyro_y",
+    "body_gyro_z",
+    "total_acc_x",
+    "total_acc_y",
+    "total_acc_z",
 ]
 
 
@@ -25,7 +32,7 @@ def load_raw_signals(uci_root, split: str = "train") -> np.ndarray:
     for name in SIGNALS:
         arr = _read_floats(base / f"{name}_{split}.txt")
         windows.append(arr.astype(np.float32))
-    stacked = np.stack(windows, axis=1)   # (N, 9, 128)
+    stacked = np.stack(windows, axis=1)  # (N, 9, 128)
     assert stacked.ndim == 3, f"expected (N,9,128), got {stacked.shape}"
     return stacked
 
