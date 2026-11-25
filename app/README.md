@@ -7,8 +7,10 @@
 
 1. **用 HTTPS 開啟本頁**——感測器 API 需要 secure context（`http://` 的
    區網 IP 在 iOS/Android 上拿不到動作事件）：
-   - 最省事：把 repo 推上 GitHub 後開 GitHub Pages
-     （`https://<user>.github.io/<repo>/app/recorder.html`）
+   - **正式網址（Pages 已部署）**：
+     `https://galen-chu.github.io/Integration-Signal-Analysis/recorder.html`
+     （Pages workflow 在 push 到 main、`app/**` 有變更時自動重新部署；
+       artifact 根目錄即 `app/`，所以 URL 不帶 `/app`）
    - 本機驗證：`python -m http.server` + `http://localhost:8000/app/recorder.html`
      （`localhost` 視為 secure context，桌機可驗 UI、真機感測器仍需 https）
 2. 按「啟用感測器」——**iOS 13+ 會彈權限詢問**，必須在這次點擊內完成

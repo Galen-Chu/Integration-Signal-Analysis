@@ -1,0 +1,49 @@
+name: Data source health check
+
+# 可重現性敘事的守門員：UCI/PAMAP2 若改版或搬家，單元測試（合成資料）
+# 不會察覺——這裡每月實際下載一次並斷言「能載入、形狀正確」。
+# 手動觸發：Actions 頁 → Data source health check → Run workflow
+on:
+  schedule:
+    - cron: "0 6 1 * *"  # 每月 1 日 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-and-load:
+    name: UCI + PAMAP2 fetch, load assertions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    - name: Fetch UCI HAR
+      run: python scripts/fetch_data.py --uci
+    - name: Fetch PAMAP2
+      run: |
+        python -c "from src.isa.config import RAW_DIR; from src.isa.data.download import download_pamap2; download_pamap2(RAW_DIR)"
+    - name: Assert datasets load with expected shapes
+      run: |
+        python - <<'PY'
+        from src.isa.config import RAW_DIR, UCI_DIR
+        from src.isa.data.loader import load_labels, load_raw_signals, load_subjects
+        from src.isa.data.loader_pamap2 import load_pamap2_windows
+
+        X = load_raw_signals(UCI_DIR, "train")
+        s = load_subjects(UCI_DIR, "train")
+        load_labels(UCI_DIR, "train")
+        assert X.shape == (7352, 9, 128), f"UCI shape drifted: {X.shape}"
+        assert len(set(s.tolist())) == 21, f"UCI subjects: {set(s)}"
+
+        w, _, g = load_pamap2_windows(RAW_DIR / "PAMAP2_Dataset" / "Protocol")
+        assert w.shape[1:] == (9, 128), f"PAMAP2 window shape: {w.shape}"
+        assert len(set(g.tolist())) == 9, f"PAMAP2 subjects: {set(g)}"
+        print(f"UCI train {X.shape} (21 subjects) + PAMAP2 {w.shape} (9 subjects) — OK")
+        PY
+    # Fitbit 刻意不在健康檢查內：kagglehub 需登入同意、常態失敗（README 手動路徑）
