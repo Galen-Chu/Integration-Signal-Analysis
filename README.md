@@ -2,6 +2,10 @@
 
 > **Human Activity Recognition × Physiological Signals · 動作識別×生理訊號整合分析**
 
+[![CI](https://github.com/Galen-Chu/Integration-Signal-Analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/Galen-Chu/Integration-Signal-Analysis/actions/workflows/ci.yml)
+[![Data source health check](https://github.com/Galen-Chu/Integration-Signal-Analysis/actions/workflows/health-check.yml/badge.svg)](https://github.com/Galen-Chu/Integration-Signal-Analysis/actions/workflows/health-check.yml)
+![tests](https://img.shields.io/badge/tests-72%20passing-2a78d6)
+
 Using wearable sensor data (3-axis accelerometer + gyroscope) to recognize
 body movements, then layering heart-rate physiology to quantify each
 movement's **load** — how hard the body works, and how well it recovers.
@@ -35,24 +39,28 @@ data/raw/UCI HAR Dataset   30 subjects × 6 activities × 50Hz (9 signals)
 data/raw/PAMAP2_Dataset    9 subjects × 18 activities × 100Hz — **HR＋IMU 同步**
                            （整合分析主力：真正的「每人動作×心率負荷」）
         │
-src/isa/data/        download + loader（可測試：測試用迷你 fixture）
+src/isa/data/        download（斷點續傳＋重試）+ loader（測試用迷你 fixture）
 src/isa/features/    time_domain（mean/std/MAD/SMA/energy/軸相關）
                      freq_domain（主頻/頻譜質心/1-3Hz 步頻帶/頻譜熵）
-src/isa/models/      RF / SVM（scaled pipeline）× GroupKFold 5 折
+                     posture（重力向量＋軸夾角——43→49 維躍進的 6 維）
+                     transient（姿態轉換暫態 5 維——預註冊負結果）
+src/isa/models/      RF / SVM / XGBoost × GroupKFold 5 折（防受試者洩漏）
 src/isa/physio/      HR 強度分區、心率恢復 HRR、每日負荷加權
-src/isa/viz/         混淆矩陣、頻譜、心率時間軸
+src/isa/viz/         混淆矩陣、頻譜、心率時間軸、IMU 位置對照圖
         │
-reports/findings.md  最終敘事（面試故事）; figures/
+reports/findings.md  最終敘事（面試故事）; cheatsheet.md 一頁速查; figures/
+app/recorder.html    v2 手機錄製頁（Pages 已部署；資料契約見 app/README.md）
 ```
 
 ## 🚀 Quick Start · 快速開始
 
 ```bash
-pip install -r requirements.txt
-python scripts/fetch_data.py --all    # UCI HAR (~60MB) + Fitbit（kagglehub 公開集免帳號）
+pip install -e .                      # 可編輯安裝（含依賴）；或 pip install -r requirements.txt
+python scripts/fetch_data.py --uci    # UCI HAR（~60MB，斷點續傳）；Fitbit 需手動下載（見下）
+python -c "from src.isa.config import RAW_DIR; from src.isa.data.download import download_pamap2; download_pamap2(RAW_DIR)"   # PAMAP2（~680MB，續傳＋重試）
 python scripts/run_pipeline.py        # 自製特徵 × RF/SVM × subject-wise CV
 python scripts/run_pipeline.py --features both   # 與官方 561 特徵對照
-python -m pytest                      # 測試（合成資料，免下載）
+python -m pytest                      # 72 項測試（合成資料，免下載）
 ```
 
 > Fitbit 下載若失敗（kagglehub 需要 cookie 或被限流）：到

@@ -245,10 +245,12 @@ RF +0.4pp/SIT +0.7pp——全在預設門檻之下 → **判讀 NEGATIVE**。
 
 ```bash
 python scripts/fetch_data.py --uci          # UCI HAR
-python -c "from src.isa.data.download import download_pamap2 as f; f()"  # PAMAP2
+python -c "from src.isa.config import RAW_DIR; from src.isa.data.download import download_pamap2; download_pamap2(RAW_DIR)"  # PAMAP2（~680MB，續傳＋重試）
 python scripts/run_pipeline.py              # 分類基準（subject-wise CV）
 python scripts/run_integration.py           # 動作×心率負荷梯
 python scripts/run_pipeline.py --features ours2 --split official  # 姿態幾何實驗
+python scripts/run_feature_ladder.py        # N2 特徵移植階梯（負結果記錄）
+python scripts/run_transient_ladder.py      # 暫態特徵階梯（負結果記錄）
 python scripts/run_pamap2_classification.py  # 分類複現（12 活動）
 python scripts/run_pamap2_position.py        # IMU 位置對照（手/胸/踝）
 python -m pytest                            # 72 項測試
