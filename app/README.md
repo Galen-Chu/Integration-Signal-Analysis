@@ -71,8 +71,13 @@ node app/test/recorder_core.test.mjs   # 50Hz 格線/內插/gap 切段/視窗/CS
 CI 已含本測試（`recorder-logic` job）。UI 本體需真機驗證——首次採集
 流程：先錄 10 秒試拍 → 匯出檢查 CSV 列數與 `.meta.json` → 正式採集。
 
-## 待辦（採集資料到位後）
+## 資料入口（已就緒，2026-11-26）
 
-- [ ] `src/isa/data/loader_phone.py`：讀 phone_v2 CSV＋meta → (N,9,128) 視窗
-      （body/total 直取、seg 內切窗、49 維特徵全相容）
-- [ ] 與 UCI/PAMAP2 的遷移學習基準（原 49 維 vs fine-tune）
+- [x] `src/isa/data/loader_phone.py`：讀 phone_v2 CSV＋meta → (N,9,128) 視窗
+      （body/total 直取、seg 內切窗、49 維特徵全相容）——
+      `load_phone_dataset("data/raw/phone_v2")` 即得 X/y/groups；
+      **跨語言合約測試**進 CI（node recorder_core 產生真錄製格式 fixture →
+      python loader 消費，視窗數逐檔相等）
+- [ ] 與 UCI/PAMAP2 的遷移學習基準（原 49 維 vs fine-tune）——跨資料集
+      零樣本已實測為 chance 級（18.9%，findings 第一節），warm-start 是否
+      加速適配等真機資料到位後測試

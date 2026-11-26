@@ -39,7 +39,7 @@ data/raw/UCI HAR Dataset   30 subjects × 6 activities × 50Hz (9 signals)
 data/raw/PAMAP2_Dataset    9 subjects × 18 activities × 100Hz — **HR＋IMU 同步**
                            （整合分析主力：真正的「每人動作×心率負荷」）
         │
-src/isa/data/        download（斷點續傳＋重試）+ loader（測試用迷你 fixture）
+src/isa/data/        download（斷點續傳＋重試）+ loader（UCI/PAMAP2/phone_v2）
 src/isa/features/    time_domain（mean/std/MAD/SMA/energy/軸相關）
                      freq_domain（主頻/頻譜質心/1-3Hz 步頻帶/頻譜熵）
                      posture（重力向量＋軸夾角——43→49 維躍進的 6 維）
@@ -83,7 +83,7 @@ python -m pytest                      # 78 項測試（合成資料，免下載�
 
 **下次開發 · Next（2026-11-06 收錄，追蹤於 Issue #2）**
 
-- [ ] **N1 手機自採錄製器**（優先序 1·v2 主線）：**工程完成＋已上線（2026-11-25）**——`app/recorder.html`：DeviceMotion 錄製頁（iOS 權限手勢流程、50Hz 精確重採樣、gap 切段不內插、128 視窗計數、腰/胸/腕位置指引），核心邏輯有 node 測試進 CI；資料格式契約見 [app/README](app/README.md)。**正式網址**：<https://galen-chu.github.io/Integration-Signal-Analysis/recorder.html>——**待 Galen 真機採集**（10 秒試拍 → 檢查 CSV/meta → 正式錄，每活動 ≥60 秒）
+- [ ] **N1 手機自採錄製器**（優先序 1·v2 主線）：**工程完成＋已上線（2026-11-25/26）**——`app/recorder.html`：DeviceMotion 錄製頁（iOS 權限手勢流程、50Hz 精確重採樣、gap 切段不內插、128 視窗計數、腰/胸/腕位置指引、收集日 session 清單），核心邏輯有 node 測試進 CI；**資料入口 `loader_phone.py` 就緒**（跨語言合約測試：node 產生真錄製格式 → python loader 逐檔視窗數相等），契約見 [app/README](app/README.md)。**正式網址**：<https://galen-chu.github.io/Integration-Signal-Analysis/recorder.html>——**待 Galen 真機採集**（10 秒試拍 → 檢查 CSV/meta → 正式錄，每活動 ≥60 秒；回存 `data/raw/phone_v2/` 即入管線）
 - [x] **N2 選擇性特徵移植**（負結果·2026-11-10）：ECDF/頻帶能量/jerk 單一家族皆買不到剩餘 5pp（jerk +0.4pp 代價 43 維）——49 維＝精簡集最適解，剩餘差距屬官方 17 家族工程廣度；見 findings N2 節
 - [x] **N3 Notebooks 01/02/04 填實**（2026-11-25）：EDA（訊號長相/步頻指紋/受試者變異）、特徵與模型戰績（49 維故事的真實數字重現）、生理整合（分區/HRR/每日負荷，Fitbit 缺席時自動以 PAMAP2 Protocol 場次示範）——已執行存出輸出；03 的 Protocol 路徑地雷（glob 誤抓 Optional 場次）一併修正
 - [x] **N4 小項批次**（2026-11-10）：CI 加 ruff、每受試者準確率分布圖、XGBoost 第三模型對照（561 維 94.2% 仍不敵 SVM 95.5%——瓶頸在特徵不在模型）

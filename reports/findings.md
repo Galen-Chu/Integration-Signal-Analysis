@@ -278,6 +278,7 @@ python scripts/run_feature_ladder.py        # N2 特徵移植階梯（負結果�
 python scripts/run_transient_ladder.py      # 暫態特徵階梯（負結果記錄）
 python scripts/run_pamap2_classification.py  # 分類複現（12 活動）
 python scripts/run_pamap2_position.py        # IMU 位置對照（手/胸/踝）
+python scripts/run_cross_dataset.py          # 跨資料集零樣本遷移（負結果記錄）
 python -m pytest                            # 78 項測試
 ```
 
