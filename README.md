@@ -60,7 +60,7 @@ python scripts/fetch_data.py --uci    # UCI HAR（~60MB，斷點續傳）；Fitb
 python -c "from src.isa.config import RAW_DIR; from src.isa.data.download import download_pamap2; download_pamap2(RAW_DIR)"   # PAMAP2（~680MB，續傳＋重試）
 python scripts/run_pipeline.py        # 自製特徵 × RF/SVM × subject-wise CV
 python scripts/run_pipeline.py --features both   # 與官方 561 特徵對照
-python -m pytest                      # 72 項測試（合成資料，免下載）
+python -m pytest                      # 78 項測試（合成資料，免下載）
 ```
 
 > Fitbit 下載若失敗（kagglehub 需要 cookie 或被限流）：到
@@ -79,6 +79,7 @@ python -m pytest                      # 72 項測試（合成資料，免下載�
 - [x] **特徵負結果 2·暫態**（2026-11-25）：+5 維姿態轉換暫態特徵未達預設門檻（SVM SITTING 召回 79.6→78.4%）——「改善方向在轉態特徵」的舊推測正式否證，殘餘 5pp 再次收窄至靜態幾何工程廣度；49 維維持最適；見 [findings](reports/findings.md)
 - [x] **工程強化批次**（2026-11-25）：ruff format 全庫套用＋CI 加 `format --check`；**端到端煙霧測試**（合成資料走 特徵→模型→評估→全視覺化 函式，69 項測試）；`pip install -e .` 可安裝（pyproject `[project]` 元資料＋套件宣告）
 - [x] **工程強化 2**（2026-11-25）：GitHub Pages 部署錄製頁（`app/**` 有變更自動重部署，真機 https 就緒）；**每月資料源健康檢查**（實際下載 UCI/PAMAP2 並斷言可載入、形狀正確——合成資料測試無法察覺上游改版）；Dependabot（pip＋Actions 週期檢查）；[面試速查卡](reports/cheatsheet.md)（五個數字故事＋反問彈藥）
+- [x] **工程強化 3**（2026-11-26）：**`loader_phone.py`＋跨語言合約測試**（node recorder_core 產生真錄製格式 fixture → python loader 消費，N1 資料回存即插即用）；錄製頁收集日 UX（session 累積表＋全部重新匯出）；**跨資料集遷移實驗**（負結果：UCI→PAMAP2 零樣本 18.9% ≈ chance——自採微調路線獲得實證背書）；可續傳下載＋3 個斷線回歸測試；72→78 tests
 
 **下次開發 · Next（2026-11-06 收錄，追蹤於 Issue #2）**
 
