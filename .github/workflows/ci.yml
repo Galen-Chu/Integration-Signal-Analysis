@@ -35,6 +35,11 @@ jobs:
       with:
         python-version: '3.12'
 
+    # 跨語言 round-trip 測試（node recorder_core → python loader）需要 node
+    - uses: actions/setup-node@v7
+      with:
+        node-version: '20'
+
     - name: Install dependencies
       run: pip install -r requirements.txt
 
