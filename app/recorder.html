@@ -68,6 +68,16 @@
   #msg.warn { color: var(--orange); }
   .summary { font-size: 13px; color: var(--ink2); white-space: pre-line; }
   a.dl { color: var(--blue); }
+  table.sessions { width: 100%; border-collapse: collapse; margin-top: 10px;
+                   font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  table.sessions th { text-align: left; color: var(--ink2); font-weight: 600;
+                      border-bottom: 1px solid var(--line); padding: 4px 6px; }
+  table.sessions td { padding: 4px 6px; border-bottom: 1px solid var(--grid);
+                      color: var(--ink); }
+  table.sessions button { font-size: 12px; padding: 3px 8px; border-radius: 6px;
+                          border: 1px solid var(--line); background: #fff;
+                          color: var(--blue); cursor: pointer; }
+  .btnrow { display: flex; gap: 8px; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -126,6 +136,19 @@
     <div class="summary" id="summary"></div>
   </div>
 
+  <div class="card" id="sessionCard" style="display: none;">
+    <h2>這次收集的 sessions</h2>
+    <table class="sessions">
+      <thead><tr><th>#</th><th>活動</th><th>位置</th><th>視窗</th><th>列數</th><th>段</th><th></th></tr></thead>
+      <tbody id="sessionRows"></tbody>
+    </table>
+    <div class="btnrow">
+      <button class="btn" id="btnExportAll">全部重新匯出</button>
+      <button class="btn" id="btnClear">清除清單</button>
+    </div>
+    <p class="hint">清除只影響本頁清單——已下載到你裝置的檔案不受影響。</p>
+  </div>
+
   <p class="hint">資料只存在本機（匯出前不上傳）。鎖屏會中斷事件——錄製中請保持
     螢幕開啟；開始時會嘗試申請 Wake Lock。</p>
 </div>
@@ -153,6 +176,7 @@ $("posRow").addEventListener("click", (e) => {
 
 let rec = null, listening = false, sessionStart = null, wakeLock = null;
 let lastTs = [];
+const sessions = [];  // 收集日累積：{base, csv, meta(字串), stats}——重新匯出用
 
 function msg(text, warn) {
   $("msg").textContent = text || "";
@@ -256,7 +280,6 @@ function stopSession() {
   const act = ($("act").value.trim() || "other").replace(/[^\w-]/g, "");
   const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "").slice(0, 12);
   const base = `${subj}_${act}_${pos}_${stamp}`;
-  download(`${base}.csv`, toCsv(resampled), "text/csv");
   const meta = {
     subject: subj, activity: act, position: pos,
     nominal_rate_hz: RATE_HZ, window_samples: WINDOW,
@@ -269,15 +292,57 @@ function stopSession() {
     null_dropped: rec.nullDropped, out_of_order_rejected: rec.rejected,
     format: "t_rel_s,seg,bx,by,bz,tx,ty,tz；bx-bz=body_acc(除重力)，tx-tz=total_acc(含重力)，m/s²，50Hz 線性內插重採樣",
   };
-  setTimeout(() => download(`${base}.meta.json`,
-    JSON.stringify(meta, null, 2), "application/json"), 400);
+  const session = {
+    base, csv: toCsv(resampled),
+    metaJson: JSON.stringify(meta, null, 2),
+    stats: { act, pos, windows, rows: resampled.length, segments: meta.segments },
+  };
+  sessions.push(session);
+  renderSessions();
+  exportSession(session);           // 停止即下載（happy path 不變）；清單供重新匯出
   $("summary").textContent =
     `完成：原始 ${rec.raw.length} 樣本 → 50Hz 格線 ${resampled.length} 列` +
     `（${meta.segments} 段）→ ≈${windows} 個 128 視窗\n` +
-    `已下載 ${base}.csv 與 .meta.json（資料只在你的裝置上）`;
-  msg("已停止。回饋：活動之間記得先停止、重新設定活動名再開始。");
+    `已下載 ${base}.csv 與 .meta.json；清單累積 ${sessions.length} 個 session（資料只在你的裝置上）`;
+  msg("已停止。換活動：改「活動名稱」後直接再按開始；離開頁面前用「全部重新匯出」補漏。");
   $("btnStart").disabled = false;
+  rec = null;                        // 清單已持有資料，釋放記憶體
 }
+
+function renderSessions() {
+  $("sessionCard").style.display = sessions.length ? "" : "none";
+  $("sessionRows").innerHTML = sessions.map((s, i) => `
+    <tr><td>${i + 1}</td><td>${s.stats.act}</td><td>${s.stats.pos}</td>
+    <td>${s.stats.windows}</td><td>${s.stats.rows}</td><td>${s.stats.segments}</td>
+    <td><button data-idx="${i}">重新匯出</button></td></tr>`).join("");
+}
+
+function exportSession(s, delay = 0) {
+  setTimeout(() => download(`${s.base}.csv`, s.csv, "text/csv"), delay);
+  setTimeout(() => download(`${s.base}.meta.json`, s.metaJson, "application/json"),
+             delay + 400);
+}
+
+$("sessionRows").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-idx]");
+  if (b) exportSession(sessions[+b.dataset.idx]);
+});
+$("btnExportAll").addEventListener("click", () => {
+  sessions.forEach((s, i) => exportSession(s, i * 900));  // 間隔避免瀏覽器擋多檔下載
+  msg(`重新下載 ${sessions.length} 個 session（每個間隔 0.9 秒）…`);
+});
+$("btnClear").addEventListener("click", () => {
+  sessions.length = 0;
+  renderSessions();
+  $("summary").textContent = "清單已清除。";
+});
+
+window.addEventListener("beforeunload", (e) => {
+  if (sessions.length) {          // 清單裡還有未（重新）下載過的資料 → 攔一下
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
 
 $("subj").value = localStorage.getItem("isa_subject") || "";
 $("btnEnable").addEventListener("click", () =>
